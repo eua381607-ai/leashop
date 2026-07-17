@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}Mon profil — LeaShop{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  <!-- Sidebar -->
+  <div class="col-lg-3">
+    <aside class="dashboard-sidebar reveal">
+      <!-- Brand -->
+      <div class="sidebar-brand">LeaShop</div>
+
+      <!-- User -->
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" style="
+          background:linear-gradient(135deg,var(--color-primary),var(--color-secondary));
+          font-size:1.4rem;
+          box-shadow:0 6px 20px rgba(var(--color-primary-rgb),0.4);
+        ">{{ user.first_name|first|default:user.email|first|upper }}</div>
+        <div>
+          <h1 class="h6 mb-0" style="font-weight:700;">{{ user.first_name|default:user.email }}</h1>
+          <p class="mb-0" style="font-size:0.78rem;color:var(--color-muted);">{{ user.email }}</p>
+          <span style="
+            display:inline-block;margin-top:0.3rem;
+            background:rgba(var(--color-success-rgb,34,197,94),0.15);
+            border:1px solid rgba(var(--color-success-rgb,34,197,94),0.3);
+            color:#4ade80;
+            font-size:0.7rem;border-radius:20px;padding:0.15rem 0.6rem;
+          ">● Actif</span>
+        </div>
+      </div>
+
+      <!-- Nav -->
+      <ul class="dashboard-nav list-unstyled">
+        <li>
+          <a class="active" href="{% url 'accounts:profile' %}"
+             style="display:flex;align-items:center;gap:0.6rem;">
+            <span>🏠</span> Vue d'ensemble
+          </a>
+        </li>
+        <li>
+          <a href="#addresses" style="display:flex;align-items:center;gap:0.6rem;">
+            <span>📍</span> Mes adresses
+          </a>
+        </li>
+        <li>
+          <a href="#orders" style="display:flex;align-items:center;gap:0.6rem;">
+            <span>📦</span> Commandes
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'orders:order_history' %}" style="display:flex;align-items:center;gap:0.6rem;">
+            <span>📋</span> Historique complet
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'accounts:password_change' %}" style="display:flex;align-items:center;gap:0.6rem;">
+            <span>🔒</span> Sécurité
+          </a>
+        </li>
+      </ul>
+
+      <!-- Quick actions -->
+      <div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,0.07);">
+        <a href="{% url 'catalog:product_list' %}" class="btn btn-outline-primary btn-sm w-100"
+           style="margin-bottom:0.5rem;display:block;text-align:center;">
+          🛍️ Continuer mes achats
+        </a>
+        <a href="{% url 'cart:cart_detail' %}" class="btn btn-sm w-100"
+           style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--color-text);text-align:center;display:block;border-radius:8px;padding:0.5rem;">
+          🛒 Mon panier
+        </a>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Main content -->
+  <div class="col-lg-9">
+    <div class="dashboard-main reveal">
+
+      <!-- Welcome banner -->
+      <div class="dashboard-welcome mb-4">
+        <div>
+          <p class="eyebrow">Tableau de bord</p>
+          <h2 class="h3 mb-1">Bonjour, {{ user.first_name|default:user.username|default:"client" }} 👋</h2>
+          <p class="mb-0" style="color:var(--color-muted);font-size:0.9rem;">
+            Gérez vos adresses, vos commandes et votre sécurité depuis votre espace personnel.
+          </p>
+        </div>
+        <a href="{% url 'accounts:password_change' %}" class="btn btn-outline-primary btn-sm">
+          🔒 Sécurité
+        </a>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="stat-card">
+            <div class="stat-label">📦 Commandes totales</div>
+            <div class="stat-value counter" data-target="{{ orders|length }}">{{ orders|length }}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="stat-card">
+            <div class="stat-label">📍 Adresses</div>
+            <div class="stat-value counter" data-target="{{ addresses|length }}">{{ addresses|length }}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="stat-card">
+            <div class="stat-label">✨ Statut compte</div>
+            <div class="stat-value" style="font-size:1.1rem;color:#4ade80;">Premium</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two-column content -->
+      <div class="row g-4">
+
+        <!-- Addresses -->
+        <div class="col-md-6" id="addresses">
+          <div class="dashboard-card h-100">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+              <h3 class="h5 mb-0">📍 Mes adresses</h3>
+              <a href="{% url 'accounts:address_add' %}" class="btn btn-sm btn-outline-primary">
+                + Ajouter
+              </a>
+            </div>
+
+            {% for address in addresses %}
+              <div class="address-card" style="margin-bottom:0.75rem;">
+                <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.5rem;">
+                  <div>
+                    <strong style="font-size:0.9rem;">{{ address.full_name }}</strong>
+                    {% if address.is_default %}
+                      <span style="
+                        display:inline-block;
+                        margin-left:0.5rem;
+                        background:rgba(var(--color-primary-rgb),0.15);
+                        border:1px solid rgba(var(--color-primary-rgb),0.3);
+                        color:var(--color-primary);
+                        font-size:0.68rem;
+                        border-radius:20px;
+                        padding:0.1rem 0.5rem;
+                      ">Par défaut</span>
+                    {% endif %}
+                  </div>
+                </div>
+                <p style="color:var(--color-muted);font-size:0.82rem;margin-bottom:0.75rem;line-height:1.5;">
+                  {{ address.address_line1 }}<br>
+                  {{ address.city }}{% if address.postal_code %}, {{ address.postal_code }}{% endif %}<br>
+                  {{ address.country }}
+                </p>
+                <div style="display:flex;gap:0.5rem;">
+                  <a href="{% url 'accounts:address_edit' address.pk %}"
+                     class="btn btn-sm btn-outline-secondary" style="font-size:0.78rem;padding:0.3rem 0.7rem;">
+                    ✏️ Modifier
+                  </a>
+                  <form method="post" action="{% url 'accounts:address_delete' address.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger" style="font-size:0.78rem;padding:0.3rem 0.7rem;"
+                      onclick="return confirm('Supprimer cette adresse ?')">
+                      🗑️ Supprimer
+                    </button>
+                  </form>
+                </div>
+              </div>
+            {% empty %}
+              <div style="text-align:center;padding:2rem 1rem;color:var(--color-muted);">
+                <div style="font-size:2.5rem;margin-bottom:0.75rem;">📭</div>
+                <p style="font-size:0.875rem;">Aucune adresse enregistrée.</p>
+                <a href="{% url 'accounts:address_add' %}" class="btn btn-sm btn-outline-primary">
+                  Ajouter ma première adresse
+                </a>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="col-md-6" id="orders">
+          <div class="dashboard-card h-100">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+              <h3 class="h5 mb-0">📦 Dernières commandes</h3>
+              <a href="{% url 'orders:order_history' %}" class="btn btn-sm btn-outline-primary">
+                Tout voir
+              </a>
+            </div>
+
+            {% for order in orders|slice:":5" %}
+              <div class="order-card" style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:0.75rem;
+                flex-wrap:wrap;
+                margin-bottom:0.75rem;
+              ">
+                <div style="flex:1;min-width:0;">
+                  <a href="{% url 'orders:order_detail' order.pk %}"
+                     style="font-weight:600;font-size:0.875rem;color:var(--color-text);text-decoration:none;">
+                    Commande #{{ order.pk }}
+                  </a>
+                  <div style="color:var(--color-muted);font-size:0.78rem;margin-top:0.1rem;">
+                    {{ order.created_at|date:"d/m/Y" }}
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
+                  <span class="status-badge
+                    {% if order.status == 'pending' %}status-pending
+                    {% elif order.status == 'paid' %}status-paid
+                    {% elif order.status == 'shipped' %}status-shipped
+                    {% elif order.status == 'delivered' %}status-delivered
+                    {% elif order.status == 'cancelled' %}status-cancelled
+                    {% else %}status-pending{% endif %}"
+                    style="font-size:0.7rem;padding:0.2rem 0.6rem;">
+                    {{ order.get_status_display }}
+                  </span>
+                  <span style="font-weight:700;font-size:0.875rem;color:var(--color-primary);">
+                    {{ order.total_amount }} €
+                  </span>
+                </div>
+              </div>
+            {% empty %}
+              <div style="text-align:center;padding:2rem 1rem;color:var(--color-muted);">
+                <div style="font-size:2.5rem;margin-bottom:0.75rem;">🛒</div>
+                <p style="font-size:0.875rem;">Aucune commande pour le moment.</p>
+                <a href="{% url 'catalog:product_list' %}" class="btn btn-sm btn-outline-primary">
+                  Découvrir le catalogue
+                </a>
+              </div>
+            {% endfor %}
+
+            {% if orders|length > 5 %}
+              <div style="margin-top:1rem;text-align:center;">
+                <a href="{% url 'orders:order_history' %}" style="
+                  color:var(--color-primary);font-size:0.85rem;font-weight:600;
+                ">Voir les {{ orders|length }} commandes →</a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

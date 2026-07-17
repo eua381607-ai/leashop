@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block title %}Mon panier — LeaShop{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  <!-- Cart Items -->
+  <div class="col-lg-8">
+    <div class="panel-card reveal p-4 p-lg-5">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.75rem;flex-wrap:wrap;gap:1rem;">
+        <div>
+          <p class="eyebrow" style="margin-bottom:0.3rem;">Shopping</p>
+          <h1 class="h3 mb-0" style="font-family:var(--font-display);">Mon panier</h1>
+        </div>
+        {% if cart.items.all %}
+        <div style="
+          background:rgba(var(--color-primary-rgb),0.1);
+          border:1px solid rgba(var(--color-primary-rgb),0.25);
+          border-radius:20px;
+          padding:0.35rem 1rem;
+          font-size:0.82rem;
+          color:var(--color-primary);
+          font-weight:600;
+        ">
+          🛒 {{ cart.items.count }} article{% if cart.items.count > 1 %}s{% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+      {% if cart.items.all %}
+        <!-- Items -->
+        <div id="cart-items">
+          {% for item in cart.items.all %}
+          <div class="cart-item reveal" id="cart-item-{{ item.id }}" style="
+            display:flex;
+            gap:1.25rem;
+            align-items:center;
+            padding:1.25rem 0;
+            border-bottom:1px solid rgba(255,255,255,0.07);
+            animation-delay:{{ forloop.counter0 }}00ms;
+            flex-wrap:wrap;
+          ">
+            <!-- Product image -->
+            <div style="flex-shrink:0;">
+              {% with product=item.variant.product %}
+              {% if product.primary_image %}
+                <img src="{{ product.primary_image.image.url }}"
+                     alt="{{ product.name }}"
+                     style="
+                       width:80px;height:80px;
+                       object-fit:cover;
+                       border-radius:12px;
+                       border:1px solid rgba(255,255,255,0.08);
+                     ">
+              {% else %}
+                <div style="
+                  width:80px;height:80px;
+                  border-radius:12px;
+                  background:rgba(var(--color-primary-rgb),0.1);
+                  border:1px solid rgba(var(--color-primary-rgb),0.2);
+                  display:flex;align-items:center;justify-content:center;
+                  font-size:1.5rem;
+                ">🛍️</div>
+              {% endif %}
+              {% endwith %}
+            </div>
+
+            <!-- Product info -->
+            <div style="flex:1;min-width:0;">
+              <a href="{{ item.variant.product.get_absolute_url }}"
+                 style="font-weight:700;font-size:0.95rem;color:var(--color-text);text-decoration:none;
+                        display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                {{ item.variant.product.name }}
+              </a>
+              {% if item.variant.label %}
+                <div style="
+                  display:inline-block;
+                  margin-top:0.3rem;
+                  background:rgba(255,255,255,0.06);
+                  border:1px solid rgba(255,255,255,0.1);
+                  border-radius:6px;
+                  padding:0.15rem 0.5rem;
+                  font-size:0.75rem;
+                  color:var(--color-muted);
+                ">{{ item.variant.label }}</div>
+              {% endif %}
+              <div style="
+                margin-top:0.6rem;
+                font-size:1rem;
+                font-weight:700;
+                color:var(--color-primary);
+              ">{{ item.variant.price }} €</div>
+            </div>
+
+            <!-- Quantity + actions -->
+            <div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;flex-wrap:wrap;">
+              <!-- Quantity form -->
+              <form method="post" action="{% url 'cart:cart_update' item.id %}"
+                    style="display:flex;align-items:center;gap:0.4rem;"
+                    class="qty-form">
+                {% csrf_token %}
+                <div style="
+                  display:flex;align-items:center;
+                  background:rgba(255,255,255,0.05);
+                  border:1px solid rgba(255,255,255,0.12);
+                  border-radius:10px;
+                  overflow:hidden;
+                ">
+                  <button type="button" class="qty-btn qty-minus"
+                          style="
+                            width:32px;height:36px;
+                            background:none;border:none;
+                            color:var(--color-text);cursor:pointer;
+                            font-size:1rem;transition:background 0.15s;
+                          ">−</button>
+                  <input type="number"
+                         name="quantity"
+                         value="{{ item.quantity }}"
+                         min="1"
+                         max="{{ item.variant.stock_quantity }}"
+                         class="qty-input"
+                         style="
+                           width:40px;text-align:center;
+                           background:none;border:none;
+                           color:var(--color-text);font-weight:600;
+                           font-size:0.9rem;padding:0;
+                         ">
+                  <button type="button" class="qty-btn qty-plus"
+                          style="
+                            width:32px;height:36px;
+                            background:none;border:none;
+                            color:var(--color-text);cursor:pointer;
+                            font-size:1rem;transition:background 0.15s;
+                          ">+</button>
+                </div>
+                <button type="submit" class="btn btn-sm btn-outline-secondary"
+                        style="padding:0.35rem 0.65rem;font-size:0.78rem;">
+                  ↻
+                </button>
+              </form>
+
+              <!-- Line total -->
+              <div style="
+                font-weight:700;
+                font-size:1rem;
+                min-width:70px;
+                text-align:right;
+              ">{{ item.line_total }} €</div>
+
+              <!-- Remove -->
+              <form method="post" action="{% url 'cart:cart_remove' item.id %}">
+                {% csrf_token %}
+                <button type="submit"
+                        title="Retirer"
+                        style="
+                          background:rgba(239,68,68,0.1);
+                          border:1px solid rgba(239,68,68,0.25);
+                          border-radius:8px;
+                          width:34px;height:34px;
+                          display:flex;align-items:center;justify-content:center;
+                          cursor:pointer;
+                          transition:all 0.2s;
+                          font-size:0.9rem;
+                        "
+                        onmouseover="this.style.background='rgba(239,68,68,0.25)'"
+                        onmouseout="this.style.background='rgba(239,68,68,0.1)'">
+                  🗑️
+                </button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Continue shopping -->
+        <div style="margin-top:1.5rem;">
+          <a href="{% url 'catalog:product_list' %}"
+             style="color:var(--color-primary);font-size:0.875rem;font-weight:600;text-decoration:none;">
+            ← Continuer mes achats
+          </a>
+        </div>
+
+      {% else %}
+        <!-- Empty state -->
+        <div class="empty-state" style="padding:3rem 1rem;">
+          <div style="font-size:5rem;margin-bottom:1.25rem;filter:drop-shadow(0 0 20px rgba(var(--color-primary-rgb),0.3));animation:float 3s ease-in-out infinite;">🛒</div>
+          <h2 style="font-family:var(--font-display);font-size:1.5rem;margin-bottom:0.75rem;">
+            Votre panier est vide
+          </h2>
+          <p style="color:var(--color-muted);margin-bottom:2rem;max-width:350px;">
+            Découvrez notre catalogue et ajoutez des produits à votre panier.
+          </p>
+          <a href="{% url 'catalog:product_list' %}" class="btn btn-primary btn-lg">
+            Voir le catalogue
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Order Summary -->
+  {% if cart.items.all %}
+  <div class="col-lg-4">
+    <div class="panel-card reveal p-4" style="position:sticky;top:100px;">
+      <h2 class="h5 mb-4" style="font-family:var(--font-display);">📊 Résumé de commande</h2>
+
+      <!-- Line items summary -->
+      {% for item in cart.items.all %}
+      <div style="
+        display:flex;justify-content:space-between;
+        font-size:0.82rem;color:var(--color-muted);
+        margin-bottom:0.5rem;
+      ">
+        <span style="max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          {{ item.variant.product.name }}{% if item.variant.label %} ({{ item.variant.label }}){% endif %}
+          <span style="color:var(--color-text);font-weight:600;"> ×{{ item.quantity }}</span>
+        </span>
+        <span style="color:var(--color-text);font-weight:600;">{{ item.line_total }} €</span>
+      </div>
+      {% endfor %}
+
+      <div style="height:1px;background:rgba(255,255,255,0.08);margin:1rem 0;"></div>
+
+      <!-- Subtotal -->
+      <div style="display:flex;justify-content:space-between;margin-bottom:0.6rem;font-size:0.875rem;">
+        <span style="color:var(--color-muted);">Sous-total</span>
+        <span style="font-weight:600;">{{ cart.subtotal }} €</span>
+      </div>
+
+      <!-- Shipping -->
+      <div style="display:flex;justify-content:space-between;margin-bottom:0.6rem;font-size:0.875rem;">
+        <span style="color:var(--color-muted);">Livraison</span>
+        <span style="color:#4ade80;font-weight:600;">Gratuite 🎁</span>
+      </div>
+
+      <div style="height:1px;background:rgba(255,255,255,0.08);margin:1rem 0;"></div>
+
+      <!-- Total -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+        <span style="font-weight:700;font-size:1rem;">Total</span>
+        <span style="
+          font-weight:800;
+          font-size:1.4rem;
+          background:linear-gradient(135deg,var(--color-primary),var(--color-secondary));
+          -webkit-background-clip:text;
+          -webkit-text-fill-color:transparent;
+          background-clip:text;
+        ">{{ cart.subtotal }} €</span>
+      </div>
+
+      <!-- Checkout CTA -->
+      <a href="{% url 'orders:checkout' %}" class="btn btn-primary w-100" style="
+        padding:0.9rem;
+        font-size:1rem;
+        font-weight:700;
+        letter-spacing:0.02em;
+        margin-bottom:1rem;
+      ">
+        🔒 Passer la commande
+      </a>
+
+      <!-- Trust badges -->
+      <div style="display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;margin-top:0.75rem;">
+        <div style="font-size:0.72rem;color:var(--color-muted);display:flex;align-items:center;gap:0.3rem;">
+          🔒 Paiement sécurisé
+        </div>
+        <div style="font-size:0.72rem;color:var(--color-muted);display:flex;align-items:center;gap:0.3rem;">
+          ↩️ Retours faciles
+        </div>
+      </div>
+
+      <!-- Payment methods -->
+      <div style="
+        margin-top:1.25rem;
+        padding-top:1rem;
+        border-top:1px solid rgba(255,255,255,0.07);
+        text-align:center;
+      ">
+        <p style="font-size:0.72rem;color:var(--color-muted);margin-bottom:0.5rem;">Paiements acceptés</p>
+        <div style="display:flex;justify-content:center;gap:0.5rem;font-size:1.2rem;">
+          💳 📱 🏦
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Quantity +/- buttons
+  document.querySelectorAll('.qty-form').forEach(function(form) {
+    const input = form.querySelector('.qty-input');
+    const minusBtn = form.querySelector('.qty-minus');
+    const plusBtn = form.querySelector('.qty-plus');
+    const max = parseInt(input.getAttribute('max')) || 999;
+
+    if (minusBtn) {
+      minusBtn.addEventListener('click', function() {
+        const val = parseInt(input.value) || 1;
+        if (val > 1) input.value = val - 1;
+      });
+    }
+    if (plusBtn) {
+      plusBtn.addEventListener('click', function() {
+        const val = parseInt(input.value) || 1;
+        if (val < max) input.value = val + 1;
+      });
+    }
+  });
+});
+</script>
+{% endblock %}

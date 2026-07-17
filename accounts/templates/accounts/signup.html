@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}Inscription — LeaShop{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6 col-md-8">
+    <div class="auth-card reveal p-4 p-lg-5">
+
+      <!-- Header -->
+      <div style="text-align:center;margin-bottom:2rem;">
+        <div style="
+          width:64px;height:64px;
+          border-radius:20px;
+          background:linear-gradient(135deg,var(--color-secondary),var(--color-accent));
+          display:flex;align-items:center;justify-content:center;
+          font-size:1.6rem;
+          margin:0 auto 1.25rem;
+          box-shadow:0 8px 24px rgba(var(--color-secondary-rgb),0.35);
+        ">✨</div>
+        <p class="eyebrow" style="margin-bottom:0.4rem;">Nouveau client</p>
+        <h1 class="h3 mb-2">Créer mon compte</h1>
+        <p style="color:var(--color-muted);font-size:0.9rem;max-width:350px;margin:0 auto;">
+          Rejoignez LeaShop et profitez d'une expérience shopping exclusive.
+        </p>
+      </div>
+
+      <!-- Avantages -->
+      <div style="
+        display:flex;gap:0.75rem;flex-wrap:wrap;justify-content:center;
+        margin-bottom:1.75rem;
+      ">
+        {% for perk in "Suivi commandes,Historique achats,Adresses sauvegardées"|split:"," %}
+        <div style="
+          display:flex;align-items:center;gap:0.4rem;
+          background:rgba(var(--color-primary-rgb),0.08);
+          border:1px solid rgba(var(--color-primary-rgb),0.2);
+          border-radius:20px;
+          padding:0.3rem 0.75rem;
+          font-size:0.78rem;
+          color:var(--color-primary);
+        ">✓ {{ perk }}</div>
+        {% endfor %}
+      </div>
+
+      <!-- Errors -->
+      {% if form.non_field_errors %}
+        <div style="
+          background:rgba(239,68,68,0.12);
+          border:1px solid rgba(239,68,68,0.3);
+          border-radius:10px;
+          color:#fca5a5;
+          padding:0.75rem 1rem;
+          margin-bottom:1.5rem;
+          font-size:0.875rem;
+        ">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <form method="post" id="signup-form" novalidate>
+        {% csrf_token %}
+
+        <!-- Name fields side by side if available -->
+        {% if form.first_name and form.last_name %}
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <div class="floating-field-signup">
+              {{ form.first_name }}
+              <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+            </div>
+            {% for error in form.first_name.errors %}
+              <div style="color:#fca5a5;font-size:0.78rem;margin-top:0.3rem;">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="col-6">
+            <div class="floating-field-signup">
+              {{ form.last_name }}
+              <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+            </div>
+            {% for error in form.last_name.errors %}
+              <div style="color:#fca5a5;font-size:0.78rem;margin-top:0.3rem;">{{ error }}</div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Other fields -->
+        {% for field in form %}
+          {% if field.name != 'first_name' and field.name != 'last_name' %}
+          <div class="mb-3">
+            <div class="floating-field-signup" style="position:relative;">
+              {% if field.name == 'email' or field.name == 'username' %}
+                <span class="field-icon">✉️</span>
+              {% elif 'password' in field.name %}
+                <span class="field-icon">🔒</span>
+              {% else %}
+                <span class="field-icon">📝</span>
+              {% endif %}
+              {{ field }}
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {% if 'password' in field.name and field.name == 'password1' %}
+                <button type="button" class="toggle-pw" data-target="id_password1" aria-label="Afficher mot de passe">👁️</button>
+              {% endif %}
+            </div>
+            {% if field.help_text %}
+              <div style="font-size:0.76rem;color:var(--color-muted);margin-top:0.35rem;padding-left:0.25rem;">
+                {{ field.help_text }}
+              </div>
+            {% endif %}
+            {% for error in field.errors %}
+              <div style="color:#fca5a5;font-size:0.78rem;margin-top:0.3rem;">{{ error }}</div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        {% endfor %}
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn-primary w-100" id="signup-btn" style="
+          padding:0.85rem;
+          font-size:1rem;
+          font-weight:600;
+          letter-spacing:0.02em;
+          margin-top:0.5rem;
+          margin-bottom:1.5rem;
+          background:linear-gradient(135deg,var(--color-secondary),var(--color-accent));
+          border:none;
+        ">
+          <span class="btn-text">Créer mon compte</span>
+          <span class="btn-loader" style="display:none;">⏳ Création en cours…</span>
+        </button>
+
+        <!-- Divider -->
+        <div style="
+          display:flex;align-items:center;gap:1rem;
+          color:var(--color-muted);font-size:0.82rem;
+          margin-bottom:1.5rem;
+        ">
+          <div style="flex:1;height:1px;background:rgba(255,255,255,0.1);"></div>
+          <span>ou</span>
+          <div style="flex:1;height:1px;background:rgba(255,255,255,0.1);"></div>
+        </div>
+
+        <p style="text-align:center;margin:0;font-size:0.875rem;color:var(--color-muted);">
+          Déjà un compte ?
+          <a href="{% url 'accounts:login' %}" style="color:var(--color-primary);font-weight:600;">
+            Se connecter →
+          </a>
+        </p>
+      </form>
+
+    </div>
+
+    <!-- Legal notice -->
+    <p style="text-align:center;font-size:0.75rem;color:var(--color-muted);margin-top:1.25rem;padding:0 1rem;">
+      En créant un compte, vous acceptez nos <a href="#" style="color:var(--color-primary);">Conditions d'utilisation</a>
+      et notre <a href="#" style="color:var(--color-primary);">Politique de confidentialité</a>.
+    </p>
+  </div>
+</div>
+
+<style>
+.floating-field-signup {
+  position:relative;
+}
+.floating-field-signup input,
+.floating-field-signup select,
+.floating-field-signup textarea {
+  width:100%;
+  padding:0.9rem 1rem 0.9rem 2.75rem;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:12px;
+  color:var(--color-text);
+  font-size:0.875rem;
+  transition:all 0.2s ease;
+}
+.floating-field-signup input:focus,
+.floating-field-signup select:focus {
+  outline:none;
+  border-color:var(--color-secondary);
+  background:rgba(var(--color-secondary-rgb),0.06);
+  box-shadow:0 0 0 3px rgba(var(--color-secondary-rgb),0.15);
+}
+.floating-field-signup label {
+  position:absolute;
+  left:2.75rem;top:50%;transform:translateY(-50%);
+  font-size:0.875rem;color:var(--color-muted);
+  transition:all 0.2s ease;pointer-events:none;
+  background:transparent;
+}
+.floating-field-signup input:focus ~ label,
+.floating-field-signup input:not(:placeholder-shown) ~ label {
+  top:0;transform:translateY(-50%);
+  font-size:0.72rem;color:var(--color-secondary);
+  background:var(--color-surface);
+  padding:0 0.4rem;border-radius:4px;
+}
+.field-icon {
+  position:absolute;left:1rem;top:50%;transform:translateY(-50%);
+  font-size:0.9rem;pointer-events:none;z-index:1;color:var(--color-muted);
+}
+.toggle-pw {
+  position:absolute;right:1rem;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;color:var(--color-muted);
+  font-size:0.85rem;padding:0.25rem;z-index:1;transition:color 0.2s;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Password toggles
+  document.querySelectorAll('.toggle-pw').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const targetId = this.getAttribute('data-target');
+      const input = document.getElementById(targetId);
+      if (input) {
+        input.type = input.type === 'password' ? 'text' : 'password';
+        this.textContent = input.type === 'text' ? '🙈' : '👁️';
+      }
+    });
+  });
+
+  // Placeholder trick for floating labels
+  document.querySelectorAll('.floating-field-signup input').forEach(function(input) {
+    if (!input.getAttribute('placeholder')) {
+      input.setAttribute('placeholder', ' ');
+    }
+  });
+
+  // Loading state
+  const form = document.getElementById('signup-form');
+  const btn = document.getElementById('signup-btn');
+  if (form && btn) {
+    form.addEventListener('submit', function() {
+      btn.querySelector('.btn-text').style.display = 'none';
+      btn.querySelector('.btn-loader').style.display = 'inline';
+      btn.disabled = true;
+    });
+  }
+});
+</script>
+{% endblock %}

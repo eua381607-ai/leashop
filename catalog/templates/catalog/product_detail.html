@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} — LeaShop{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'catalog:product_list' %}">Accueil</a></li>
+    <li class="breadcrumb-item">
+      <a href="{% url 'catalog:category_detail' product.category.slug %}">{{ product.category.name }}</a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+  </ol>
+</nav>
+
+<div class="row g-5">
+
+  <!-- ── Gallery ───────────────────────────────────────────────── -->
+  <div class="col-md-6 reveal-left">
+    <div class="product-gallery">
+
+      {% if product.primary_image %}
+        <img src="{{ product.primary_image.image.url }}"
+             class="product-main-image"
+             alt="{{ product.name }}"
+             id="mainProductImage">
+      {% else %}
+        <div class="product-main-image d-flex flex-column align-items-center justify-content-center"
+             style="background:var(--gray-100);border-radius:var(--radius-xl);">
+          <span style="font-size:4rem;">🛍️</span>
+          <p style="color:var(--text-muted);margin-top:0.5rem;">Pas d'image disponible</p>
+        </div>
+      {% endif %}
+
+      {% if product.images.count > 1 %}
+        <div class="product-thumbnails">
+          {% for image in product.images.all %}
+            <img src="{{ image.image.url }}"
+                 class="product-thumb {% if forloop.first %}active{% endif %}"
+                 alt="{{ product.name }}"
+                 data-full="{{ image.image.url }}">
+          {% endfor %}
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+  <!-- ── Info Panel ─────────────────────────────────────────────── -->
+  <div class="col-md-6 reveal-right">
+
+    <!-- Category & SKU -->
+    <div class="product-meta">
+      <span>🗂 <a href="{% url 'catalog:category_detail' product.category.slug %}" style="color:var(--brand-500);">{{ product.category.name }}</a></span>
+      <span>• Réf. {{ product.sku }}</span>
+    </div>
+
+    <h1 class="product-detail-title">{{ product.name }}</h1>
+
+    <!-- Rating -->
+    {% if product.review_count %}
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
+        <span class="rating-stars">
+          {% for i in "12345" %}{% if forloop.counter <= product.average_rating %}★{% else %}☆{% endif %}{% endfor %}
+        </span>
+        <span class="rating-count">{{ product.review_count }} avis</span>
+      </div>
+    {% endif %}
+
+    <!-- Price -->
+    <div class="product-detail-price" id="displayPrice">
+      {{ product.base_price }} XOF
+    </div>
+
+    <!-- Description -->
+    {% if product.description %}
+      <div style="color:var(--text-muted);font-size:0.92rem;line-height:1.75;margin-bottom:1.5rem;">
+        {{ product.description|linebreaks }}
+      </div>
+    {% endif %}
+
+    <!-- Add to Cart Form -->
+    {% if variants %}
+      <form method="post" action="{% url 'cart:cart_add' variants.0.id %}"
+            id="add-to-cart-form"
+            data-base-url="{% url 'cart:cart_add' 0 %}"
+            data-base-url="{% url 'cart:cart_add' 0 %}">
+        {% csrf_token %}
+        <input type="hidden" name="quantity" id="qty-hidden" value="1">
+
+        <!-- Variant selector -->
+        {% if variants.count > 1 %}
+          <div class="variant-selector">
+            <div class="variant-label-row">Choisir une variante</div>
+            <div class="variant-btns">
+              {% for variant in variants %}
+                <button type="button"
+                        class="variant-btn"
+                        data-variant-id="{{ variant.id }}"
+                        data-price="{{ variant.price }} XOF"
+                        data-in-stock="{% if variant.is_in_stock %}true{% else %}false{% endif %}"
+                        {% if not variant.is_in_stock %}disabled{% endif %}>
+                  {{ variant.label|default:"Standard" }}
+                </button>
+              {% endfor %}
+            </div>
+          </div>
+        {% else %}
+          <input type="hidden" id="selected-variant-id" value="{{ variants.0.id }}">
+        {% endif %}
+
+        <!-- Quantity -->
+        <div class="mb-4">
+          <div class="variant-label-row">Quantité</div>
+          <div class="qty-selector">
+            <button type="button" class="qty-btn" data-qty-dec aria-label="Moins">−</button>
+            <input type="text" class="qty-val" id="qtyDisplay" value="1" min="1" max="99" readonly>
+            <button type="button" class="qty-inc qty-btn" data-qty-inc aria-label="Plus">+</button>
+          </div>
+        </div>
+
+        <!-- Sync qty hidden input -->
+        <script>
+          document.getElementById('qtyDisplay').addEventListener('change', function() {
+            document.getElementById('qty-hidden').value = this.value;
+          });
+          document.querySelectorAll('[data-qty-dec],[data-qty-inc]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+              setTimeout(function() {
+                var v = document.getElementById('qtyDisplay').value;
+                document.getElementById('qty-hidden').value = v;
+              }, 10);
+            });
+          });
+        </script>
+
+        <button type="submit"
+                class="btn btn-primary btn-lg w-100 btn-add-to-cart-main btn-add-to-cart mb-3"
+                {% if not product.in_stock %}disabled{% endif %}>
+          {% if product.in_stock %}🛒 Ajouter au panier{% else %}⛔ Indisponible{% endif %}
+        </button>
+
+        <a href="{% url 'cart:cart_detail' %}" class="btn btn-outline-primary btn-lg w-100">
+          Voir mon panier →
+        </a>
+      </form>
+    {% else %}
+      <div class="alert alert-warning">
+        ⚠️ Ce produit n'est pas disponible à l'achat pour le moment.
+      </div>
+    {% endif %}
+
+    <!-- Trust badges -->
+    <div class="trust-badges">
+      <div class="trust-badge"><span>🔒</span> Paiement sécurisé</div>
+      <div class="trust-badge"><span>🚚</span> Livraison rapide</div>
+      <div class="trust-badge"><span>📄</span> Facture PDF</div>
+      <div class="trust-badge"><span>💬</span> Support client</div>
+    </div>
+
+  </div><!-- /.col -->
+</div><!-- /.row -->
+
+<!-- Divider -->
+<div class="section-divider my-5"></div>
+
+<!-- Reviews -->
+<div class="row">
+  <div class="col-lg-8">
+    <h2 class="mb-4" style="font-family:var(--font-display);font-size:1.5rem;font-weight:800;">
+      💬 Avis clients
+      {% if product.review_count %}
+        <span style="font-size:0.9rem;font-weight:400;color:var(--text-muted);margin-left:0.5rem;">({{ product.review_count }} avis)</span>
+      {% endif %}
+    </h2>
+
+    {% if review_form %}
+      <div class="glass-card p-4 mb-4">
+        <h3 class="h6 mb-3" style="font-family:var(--font-display);">
+          {% if user_review %}✏️ Modifier mon avis{% else %}⭐ Laisser un avis{% endif %}
+        </h3>
+        <form method="post" style="max-width:520px;">
+          {% csrf_token %}
+          <div class="mb-3">
+            {{ review_form.rating.label_tag }}
+            {{ review_form.rating }}
+          </div>
+          <div class="mb-3">
+            {{ review_form.comment.label_tag }}
+            {{ review_form.comment }}
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm">
+            {% if user_review %}Mettre à jour mon avis{% else %}Publier mon avis{% endif %}
+          </button>
+        </form>
+      </div>
+    {% elif not user.is_authenticated %}
+      <div class="alert alert-info mb-4">
+        ℹ️ <a href="{% url 'accounts:login' %}?next={{ request.path }}" style="color:var(--brand-600);font-weight:600;">Connectez-vous</a> pour laisser un avis sur ce produit.
+      </div>
+    {% endif %}
+
+    <!-- Reviews list -->
+    {% for review in reviews %}
+      <div class="review-item reveal">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.4rem;">
+          <div>
+            <span class="review-author">{{ review.user.first_name|default:review.user.username }}</span>
+            <span class="rating-stars ms-2" style="font-size:0.85rem;">
+              {% for i in "12345" %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %}
+            </span>
+          </div>
+          <span class="review-date">{{ review.created_at|date:"d/m/Y" }}</span>
+        </div>
+        {% if review.comment %}
+          <p class="review-text">{{ review.comment }}</p>
+        {% endif %}
+      </div>
+    {% empty %}
+      <div class="cart-empty" style="padding:2.5rem 2rem;">
+        <div style="font-size:2.5rem;margin-bottom:0.75rem;">💬</div>
+        <p style="color:var(--text-muted);margin:0;">Aucun avis pour l'instant. Soyez le premier à partager votre expérience !</p>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

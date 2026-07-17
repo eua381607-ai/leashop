@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Finaliser la commande — LeaShop{% endblock %}
+
+{% block content %}
+
+<!-- Checkout Stepper -->
+<div class="checkout-stepper mb-4 reveal">
+  <div class="step done">
+    <div class="step-circle">✓</div>
+    <div class="step-label">Panier</div>
+  </div>
+  <div class="step-connector done"></div>
+  <div class="step active">
+    <div class="step-circle">2</div>
+    <div class="step-label">Livraison</div>
+  </div>
+  <div class="step-connector"></div>
+  <div class="step">
+    <div class="step-circle">3</div>
+    <div class="step-label">Paiement</div>
+  </div>
+  <div class="step-connector"></div>
+  <div class="step">
+    <div class="step-circle">4</div>
+    <div class="step-label">Confirmation</div>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- ── Form ─────────────────────────────────────────────────── -->
+  <div class="col-lg-7">
+    <div class="checkout-panel reveal">
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <!-- Adresse de livraison -->
+        <div class="checkout-section-title">
+          📍 Adresse de livraison
+        </div>
+
+        {% if addresses %}
+          {% for address in addresses %}
+            <label class="address-option d-block cursor-pointer" for="address-{{ address.id }}">
+              <div class="d-flex align-items-start gap-3">
+                <input class="form-check-input mt-1 flex-shrink-0" type="radio"
+                       name="address_id" value="{{ address.id }}"
+                       id="address-{{ address.id }}"
+                       {% if address.is_default %}checked{% endif %}>
+                <div>
+                  <strong>{{ address.full_name }}</strong>
+                  {% if address.is_default %}<span class="badge ms-2" style="background:var(--brand-500);font-size:0.68rem;">Par défaut</span>{% endif %}
+                  <br>
+                  <small style="color:var(--text-muted);">
+                    {{ address.address_line1 }}{% if address.address_line2 %}, {{ address.address_line2 }}{% endif %}<br>
+                    {{ address.city }}{% if address.state %}, {{ address.state }}{% endif %} {{ address.postal_code }}<br>
+                    {{ address.country }} — {{ address.phone_number }}
+                  </small>
+                </div>
+              </div>
+            </label>
+          {% endfor %}
+
+          <label class="address-option d-block mt-2" for="address-new">
+            <div class="d-flex align-items-center gap-3">
+              <input class="form-check-input flex-shrink-0" type="radio"
+                     name="address_id" value="new" id="address-new">
+              <strong>➕ Utiliser une nouvelle adresse</strong>
+            </div>
+          </label>
+
+        {% else %}
+          <input type="hidden" name="address_id" value="new">
+        {% endif %}
+
+        <!-- New address form -->
+        <div class="new-address-panel mt-3 p-3 rounded-3"
+             style="background:var(--surface-2);border:1px solid var(--border-subtle);"
+             {% if addresses %}style="display:none;"{% endif %}>
+          {{ new_address_form.non_field_errors }}
+          <div class="row g-2">
+            <div class="col-md-6">
+              <div class="form-group">
+                {{ new_address_form.full_name.label_tag }}
+                {{ new_address_form.full_name }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                {{ new_address_form.phone_number.label_tag }}
+                {{ new_address_form.phone_number }}
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="form-group">
+                {{ new_address_form.address_line1.label_tag }}
+                {{ new_address_form.address_line1 }}
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="form-group">
+                {{ new_address_form.address_line2.label_tag }}
+                {{ new_address_form.address_line2 }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                {{ new_address_form.city.label_tag }}
+                {{ new_address_form.city }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                {{ new_address_form.state.label_tag }}
+                {{ new_address_form.state }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                {{ new_address_form.postal_code.label_tag }}
+                {{ new_address_form.postal_code }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                {{ new_address_form.country.label_tag }}
+                {{ new_address_form.country }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mode de paiement -->
+        <div class="checkout-section-title mt-4">
+          💳 Mode de paiement
+        </div>
+
+        <label class="payment-method-btn {% if not mobile_money_available %}active{% endif %}" for="payment-card">
+          <input class="form-check-input visually-hidden" type="radio"
+                 name="payment_method" value="card" id="payment-card" checked>
+          <span class="payment-method-icon">💳</span>
+          <div>
+            <div class="payment-method-label">Carte bancaire</div>
+            <div class="payment-method-sub">Visa, Mastercard via Stripe Checkout</div>
+          </div>
+          <span style="margin-left:auto;color:var(--brand-500);font-size:0.78rem;font-weight:700;">Sécurisé 🔒</span>
+        </label>
+
+        {% if mobile_money_available %}
+          <label class="payment-method-btn" for="payment-mobile-money">
+            <input class="form-check-input visually-hidden" type="radio"
+                   name="payment_method" value="mobile_money" id="payment-mobile-money">
+            <span class="payment-method-icon">📱</span>
+            <div>
+              <div class="payment-method-label">Mobile Money</div>
+              <div class="payment-method-sub">MTN, Orange Money et autres</div>
+            </div>
+          </label>
+
+          <div id="mobile-money-panel" class="d-none mt-2 p-3 rounded-3"
+               style="background:var(--surface-2);border:1px solid var(--border-subtle);">
+            <div class="form-group">
+              <label class="form-label" for="mobile-money-phone">📞 Numéro Mobile Money</label>
+              <input type="tel" class="form-control" id="mobile-money-phone"
+                     name="mobile_money_phone"
+                     placeholder="+226 XX XX XX XX">
+              <div class="form-text">Une demande de validation sera envoyée sur ce numéro.</div>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if fedapay_available %}
+          <label class="payment-method-btn" for="payment-fedapay">
+            <input class="form-check-input visually-hidden" type="radio"
+                   name="payment_method" value="fedapay" id="payment-fedapay">
+            <span class="payment-method-icon">🏦</span>
+            <div>
+              <div class="payment-method-label">FedaPay</div>
+              <div class="payment-method-sub">Mobile Money via FedaPay (Bénin)</div>
+            </div>
+          </label>
+        {% endif %}
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn-primary btn-lg w-100 mt-4">
+          🔒 Continuer vers le paiement
+        </button>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Summary ─────────────────────────────────────────────── -->
+  <div class="col-lg-5">
+    <div class="checkout-summary reveal stagger-2">
+      <h2 class="h5 fw-bold mb-3" style="font-family:var(--font-display);">🧾 Récapitulatif</h2>
+
+      {% for item in cart.items.all %}
+        <div class="summary-item">
+          <div>
+            <div style="font-weight:600;font-size:0.9rem;">{{ item.variant.product.name }}</div>
+            {% if item.variant.label %}
+              <div style="font-size:0.78rem;color:var(--text-muted);">{{ item.variant.label }}</div>
+            {% endif %}
+            <div style="font-size:0.78rem;color:var(--text-muted);">× {{ item.quantity }}</div>
+          </div>
+          <div style="font-weight:700;white-space:nowrap;">{{ item.line_total }}</div>
+        </div>
+      {% endfor %}
+
+      <div class="summary-item" style="padding-top:0.75rem;">
+        <span style="color:var(--text-muted);">Sous-total</span>
+        <span style="font-weight:600;">{{ cart.subtotal }}</span>
+      </div>
+
+      <div class="summary-item">
+        <span style="color:var(--text-muted);">Livraison</span>
+        <span style="font-weight:600;color:var(--success);">Gratuite</span>
+      </div>
+
+      <div class="summary-item" style="border-bottom:none;padding-top:0.75rem;">
+        <span class="fw-bold" style="font-size:1rem;">Total</span>
+        <span class="summary-total">{{ cart.subtotal }}</span>
+      </div>
+
+      <!-- Security -->
+      <div class="security-badges">
+        <span class="security-badge">🔒 SSL</span>
+        <span class="security-badge">💳 Stripe</span>
+        <span class="security-badge">🛡️ Sécurisé</span>
+        <span class="security-badge">✅ Garanti</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.row -->
+
+{% endblock %}

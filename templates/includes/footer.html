@@ -1,0 +1,81 @@
+<footer class="site-footer">
+  <div class="container py-5" style="position:relative;z-index:1;">
+
+    <div class="row g-5">
+
+      <!-- Brand column -->
+      <div class="col-lg-4">
+        <div class="footer-brand-name">
+          <span style="background:linear-gradient(135deg,#818cf8,#2dd4bf);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">L</span>eaShop
+        </div>
+        <p style="color:rgba(255,255,255,0.55);font-size:0.88rem;line-height:1.7;max-width:280px;margin-bottom:1.25rem;">
+          Une expérience shopping moderne, fluide et élégante — pensée pour mettre en valeur chaque produit et rendre chaque achat agréable.
+        </p>
+        <!-- Social links -->
+        <div class="social-links">
+          <a href="#" class="social-link" aria-label="Facebook">📘</a>
+          <a href="#" class="social-link" aria-label="Instagram">📸</a>
+          <a href="#" class="social-link" aria-label="Twitter">🐦</a>
+          <a href="#" class="social-link" aria-label="WhatsApp">💬</a>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="col-sm-6 col-lg-2">
+        <h4 class="footer-heading">Navigation</h4>
+        <ul class="list-unstyled footer-links">
+          <li><a href="{% url 'catalog:product_list' %}">🏠 Accueil</a></li>
+          <li><a href="{% url 'catalog:product_list' %}">🛍️ Produits</a></li>
+          <li><a href="{% url 'cart:cart_detail' %}">🛒 Mon panier</a></li>
+          <li><a href="{% url 'orders:order_history' %}">📦 Mes commandes</a></li>
+        </ul>
+      </div>
+
+      <!-- Service client -->
+      <div class="col-sm-6 col-lg-2">
+        <h4 class="footer-heading">Compte</h4>
+        <ul class="list-unstyled footer-links">
+          <li><a href="{% url 'accounts:login' %}">🔐 Connexion</a></li>
+          <li><a href="{% url 'accounts:signup' %}">📝 Créer un compte</a></li>
+          <li><a href="{% url 'accounts:profile' %}">👤 Mon profil</a></li>
+          <li><a href="#">🎧 Support</a></li>
+        </ul>
+      </div>
+
+      <!-- Newsletter -->
+      <div class="col-lg-4">
+        <h4 class="footer-heading">Newsletter</h4>
+        <p style="color:rgba(255,255,255,0.5);font-size:0.82rem;margin-bottom:0.75rem;">
+          Recevez nos offres exclusives et nouveautés directement dans votre boîte mail.
+        </p>
+        <div class="footer-newsletter">
+          <div class="footer-newsletter-input">
+            <input type="email" placeholder="votre@email.com" aria-label="Email newsletter">
+            <button type="button">S'abonner →</button>
+          </div>
+        </div>
+
+        <!-- Payment methods -->
+        <div class="mt-1.5 mt-3">
+          <p style="color:rgba(255,255,255,0.35);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.6rem;">Paiement sécurisé</p>
+          <div class="payment-icons">
+            <span class="payment-icon">💳 Stripe</span>
+            <span class="payment-icon">📱 Mobile Money</span>
+            <span class="payment-icon">🔒 SSL</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.row -->
+
+    <div class="footer-bottom">
+      <p style="margin:0;">© {% now "Y" %} LeaShop — Tous droits réservés.</p>
+      <div style="display:flex;gap:1.25rem;">
+        <a href="#" style="color:rgba(255,255,255,0.35);font-size:0.78rem;text-decoration:none;">Politique de confidentialité</a>
+        <a href="#" style="color:rgba(255,255,255,0.35);font-size:0.78rem;text-decoration:none;">CGV</a>
+        <a href="#" style="color:rgba(255,255,255,0.35);font-size:0.78rem;text-decoration:none;">Mentions légales</a>
+      </div>
+    </div>
+
+  </div>
+</footer>

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Adresse — LeaShop{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <h1 class="h3 mb-4">Adresse de livraison</h1>
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-2">
+                <div class="col-md-6">{{ form.full_name.label_tag }} {{ form.full_name }}</div>
+                <div class="col-md-6">{{ form.phone_number.label_tag }} {{ form.phone_number }}</div>
+                <div class="col-12">{{ form.address_line1.label_tag }} {{ form.address_line1 }}</div>
+                <div class="col-12">{{ form.address_line2.label_tag }} {{ form.address_line2 }}</div>
+                <div class="col-md-6">{{ form.city.label_tag }} {{ form.city }}</div>
+                <div class="col-md-6">{{ form.state.label_tag }} {{ form.state }}</div>
+                <div class="col-md-6">{{ form.postal_code.label_tag }} {{ form.postal_code }}</div>
+                <div class="col-md-6">{{ form.country.label_tag }} {{ form.country }}</div>
+                <div class="col-12 form-check mt-2">
+                    {{ form.is_default }} {{ form.is_default.label_tag }}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Enregistrer</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

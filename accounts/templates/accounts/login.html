@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Connexion — LeaShop{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-5 col-md-7">
+    <div class="auth-card reveal p-4 p-lg-5">
+
+      <!-- Header -->
+      <div style="text-align:center;margin-bottom:2rem;">
+        <div style="
+          width:64px;height:64px;
+          border-radius:20px;
+          background:linear-gradient(135deg,var(--color-primary),var(--color-secondary));
+          display:flex;align-items:center;justify-content:center;
+          font-size:1.6rem;
+          margin:0 auto 1.25rem;
+          box-shadow:0 8px 24px rgba(var(--color-primary-rgb),0.35);
+        ">🔑</div>
+        <p class="eyebrow" style="margin-bottom:0.4rem;">Accès client</p>
+        <h1 class="h3 mb-2">Bon retour !</h1>
+        <p style="color:var(--color-muted);font-size:0.9rem;max-width:300px;margin:0 auto;">
+          Connectez-vous pour retrouver vos commandes et votre panier.
+        </p>
+      </div>
+
+      <!-- Errors -->
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger" role="alert" style="
+          background:rgba(239,68,68,0.12);
+          border:1px solid rgba(239,68,68,0.3);
+          border-radius:10px;
+          color:#fca5a5;
+          padding:0.75rem 1rem;
+          margin-bottom:1.5rem;
+          font-size:0.875rem;
+        ">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      <!-- Form -->
+      <form method="post" id="login-form" novalidate>
+        {% csrf_token %}
+
+        <!-- Email / Username -->
+        <div class="floating-field mb-3">
+          <div style="position:relative;">
+            <span style="
+              position:absolute;left:1rem;top:50%;transform:translateY(-50%);
+              font-size:1rem;pointer-events:none;z-index:1;color:var(--color-muted);
+            ">✉️</span>
+            {{ form.username }}
+            <label for="{{ form.username.id_for_label }}" style="
+              position:absolute;
+              left:3rem;top:50%;transform:translateY(-50%);
+              font-size:0.875rem;color:var(--color-muted);
+              transition:all 0.2s ease;pointer-events:none;
+              background:transparent;
+            ">{{ form.username.label }}</label>
+          </div>
+          {% for error in form.username.errors %}
+            <div style="color:#fca5a5;font-size:0.78rem;margin-top:0.3rem;">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <!-- Password -->
+        <div class="floating-field mb-4">
+          <div style="position:relative;">
+            <span style="
+              position:absolute;left:1rem;top:50%;transform:translateY(-50%);
+              font-size:1rem;pointer-events:none;z-index:1;color:var(--color-muted);
+            ">🔒</span>
+            {{ form.password }}
+            <button type="button" id="toggle-password" aria-label="Afficher/masquer le mot de passe"
+              style="
+                position:absolute;right:1rem;top:50%;transform:translateY(-50%);
+                background:none;border:none;cursor:pointer;color:var(--color-muted);
+                font-size:0.9rem;padding:0.25rem;
+                transition:color 0.2s;z-index:1;
+              ">👁️</button>
+            <label for="{{ form.password.id_for_label }}" style="
+              position:absolute;
+              left:3rem;top:50%;transform:translateY(-50%);
+              font-size:0.875rem;color:var(--color-muted);
+              transition:all 0.2s ease;pointer-events:none;
+              background:transparent;
+            ">{{ form.password.label }}</label>
+          </div>
+          {% for error in form.password.errors %}
+            <div style="color:#fca5a5;font-size:0.78rem;margin-top:0.3rem;">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn-primary w-100" id="login-btn" style="
+          padding:0.85rem;
+          font-size:1rem;
+          font-weight:600;
+          letter-spacing:0.02em;
+          margin-bottom:1.5rem;
+        ">
+          <span class="btn-text">Se connecter</span>
+          <span class="btn-loader" style="display:none;">⏳ Connexion en cours…</span>
+        </button>
+
+        <!-- Divider -->
+        <div style="
+          display:flex;align-items:center;gap:1rem;
+          color:var(--color-muted);font-size:0.82rem;
+          margin-bottom:1.5rem;
+        ">
+          <div style="flex:1;height:1px;background:rgba(255,255,255,0.1);"></div>
+          <span>ou</span>
+          <div style="flex:1;height:1px;background:rgba(255,255,255,0.1);"></div>
+        </div>
+
+        <!-- Link to signup -->
+        <p style="text-align:center;margin:0;font-size:0.875rem;color:var(--color-muted);">
+          Pas encore de compte ?
+          <a href="{% url 'accounts:signup' %}" style="color:var(--color-primary);font-weight:600;">
+            Créer un compte →
+          </a>
+        </p>
+      </form>
+
+    </div>
+
+    <!-- Security badges -->
+    <div style="
+      display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;
+      margin-top:1.5rem;padding:0 1rem;
+    ">
+      <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;color:var(--color-muted);">
+        🔒 Connexion sécurisée
+      </div>
+      <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;color:var(--color-muted);">
+        🛡️ Données protégées
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Floating label inputs */
+.floating-field input {
+  width:100%;
+  padding:0.9rem 1rem 0.9rem 3rem;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:12px;
+  color:var(--color-text);
+  font-size:0.9rem;
+  transition:all 0.2s ease;
+  position:relative;
+}
+.floating-field input:focus {
+  outline:none;
+  border-color:var(--color-primary);
+  background:rgba(var(--color-primary-rgb),0.06);
+  box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),0.15);
+}
+.floating-field input:focus + label,
+.floating-field input:not(:placeholder-shown) + label {
+  top:0;
+  transform:translateY(-50%);
+  font-size:0.75rem;
+  color:var(--color-primary);
+  background:var(--color-surface);
+  padding:0 0.4rem;
+  border-radius:4px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Password toggle
+  const toggleBtn = document.getElementById('toggle-password');
+  if (toggleBtn) {
+    const passwordInput = document.querySelector('#id_password');
+    toggleBtn.addEventListener('click', function() {
+      const isHidden = passwordInput.type === 'password';
+      passwordInput.type = isHidden ? 'text' : 'password';
+      this.textContent = isHidden ? '🙈' : '👁️';
+    });
+  }
+
+  // Loading state on submit
+  const form = document.getElementById('login-form');
+  const btn = document.getElementById('login-btn');
+  if (form && btn) {
+    form.addEventListener('submit', function() {
+      btn.querySelector('.btn-text').style.display = 'none';
+      btn.querySelector('.btn-loader').style.display = 'inline';
+      btn.disabled = true;
+    });
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Commande #{{ order.pk }} — LeaShop{% endblock %}
+
+{% block content %}
+
+<!-- Order Header -->
+<div class="order-header reveal">
+  <div>
+    <div style="font-size:0.78rem;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.3rem;">Détail de commande</div>
+    <h1 style="font-family:var(--font-display);font-size:1.6rem;margin:0;">Commande #{{ order.pk }}</h1>
+    <div style="font-size:0.82rem;color:rgba(255,255,255,0.65);margin-top:0.3rem;">
+      Passée le {{ order.created_at|date:"d/m/Y à H:i" }}
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+    <span class="status-badge
+      {% if order.status == 'pending' %}status-pending
+      {% elif order.status == 'paid' %}status-paid
+      {% elif order.status == 'shipped' %}status-shipped
+      {% elif order.status == 'delivered' %}status-delivered
+      {% elif order.status == 'cancelled' %}status-cancelled
+      {% elif order.status == 'refunded' %}status-refunded
+      {% else %}status-pending{% endif %}">
+      {{ order.get_status_display }}
+    </span>
+    {% if order.invoice_file %}
+      <a href="{% url 'orders:invoice_download' order.pk %}"
+         class="btn btn-outline-light btn-sm">
+        📄 Télécharger la facture
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- ── Articles ────────────────────────────────────────────── -->
+  <div class="col-lg-8">
+    <div class="order-table-wrapper reveal">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Article</th>
+            <th class="text-center">Quantité</th>
+            <th class="text-end">Prix unit.</th>
+            <th class="text-end">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in order.items.all %}
+            <tr>
+              <td>
+                <div style="font-weight:700;font-size:1.05rem;color:var(--text);">
+                  {{ item.product_name }}
+                  {% if item.variant_label %}
+                    <span style="font-size:0.9rem;color:#64748b;font-weight:normal;"> - {{ item.variant_label }}</span>
+                  {% endif %}
+                </div>
+                <div style="font-size:0.8rem;color:#64748b;">Réf. {{ item.sku }}</div>
+              </td>
+              <td class="text-center">
+                <span style="font-weight:600;color:var(--text);">{{ item.quantity }}</span>
+              </td>
+              <td class="text-end" style="color:#64748b;">{{ item.unit_price }}</td>
+              <td class="text-end" style="font-weight:700;color:var(--brand-600);">{{ item.line_total }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" class="text-end fw-bold" style="font-size:1rem;padding:1rem 1.25rem;">TOTAL</td>
+            <td class="text-end" style="font-size:1.2rem;font-weight:900;color:var(--brand-600);padding:1rem 1.25rem;">
+              {{ order.total_amount }}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Order timeline -->
+    <div class="order-timeline mt-4 reveal">
+      <h3 style="font-family:var(--font-display);font-size:1rem;font-weight:700;margin-bottom:1.25rem;">📍 Suivi de commande</h3>
+
+      <div class="timeline-item done">
+        <div class="timeline-dot">✓</div>
+        <div class="timeline-content">
+          <div class="timeline-title">Commande reçue</div>
+          <div class="timeline-desc">{{ order.created_at|date:"d/m/Y à H:i" }}</div>
+        </div>
+      </div>
+
+      <div class="timeline-item {% if order.status == 'paid' or order.status == 'shipped' or order.status == 'delivered' %}done{% elif order.status == 'pending' %}active{% endif %}">
+        <div class="timeline-dot">
+          {% if order.status == 'paid' or order.status == 'shipped' or order.status == 'delivered' %}✓{% else %}💳{% endif %}
+        </div>
+        <div class="timeline-content">
+          <div class="timeline-title">Paiement</div>
+          <div class="timeline-desc">
+            {% if order.status == 'paid' or order.status == 'shipped' or order.status == 'delivered' %}
+              Paiement confirmé ✅
+            {% else %}
+              En attente de confirmation...
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline-item {% if order.status == 'shipped' or order.status == 'delivered' %}done{% elif order.status == 'paid' %}active{% endif %}">
+        <div class="timeline-dot">
+          {% if order.status == 'shipped' or order.status == 'delivered' %}✓{% else %}📦{% endif %}
+        </div>
+        <div class="timeline-content">
+          <div class="timeline-title">Préparation &amp; expédition</div>
+          <div class="timeline-desc">
+            {% if order.status == 'shipped' or order.status == 'delivered' %}
+              Commande expédiée 🚚
+            {% else %}
+              En attente...
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline-item {% if order.status == 'delivered' %}done active{% endif %}">
+        <div class="timeline-dot">
+          {% if order.status == 'delivered' %}✓{% else %}🏠{% endif %}
+        </div>
+        <div class="timeline-content">
+          <div class="timeline-title">Livraison</div>
+          <div class="timeline-desc">
+            {% if order.status == 'delivered' %}Commande livrée 🎉{% else %}En attente...{% endif %}
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.order-timeline -->
+
+    {% if can_confirm_mobile_money_locally %}
+      <form method="post" action="{% url 'orders:confirm_mobile_money_locally' order.pk %}" class="mt-3">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success">
+          ✅ Confirmer le paiement Mobile Money (local)
+        </button>
+      </form>
+    {% endif %}
+  </div>
+
+  <!-- ── Sidebar ─────────────────────────────────────────────── -->
+  <div class="col-lg-4">
+
+    <!-- Status card -->
+    <div class="glass-card p-3 mb-3 reveal stagger-1">
+      <h4 style="font-family:var(--font-display);font-size:0.9rem;font-weight:700;margin-bottom:0.75rem;">📊 Informations</h4>
+      <div style="font-size:0.85rem;line-height:1.9;">
+        <div><span style="color:var(--text-muted);">Statut :</span>
+          <span class="status-badge ms-2
+            {% if order.status == 'pending' %}status-pending
+            {% elif order.status == 'paid' %}status-paid
+            {% elif order.status == 'cancelled' %}status-cancelled
+            {% else %}status-pending{% endif %}" style="font-size:0.7rem;">
+            {{ order.get_status_display }}
+          </span>
+        </div>
+        <div><span style="color:var(--text-muted);">Paiement :</span>
+          <strong>{{ order.get_payment_method_display }}</strong>
+        </div>
+        <div><span style="color:var(--text-muted);">Total :</span>
+          <strong style="color:var(--brand-600);">{{ order.total_amount }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shipping address -->
+    <div class="glass-card p-3 mb-3 reveal stagger-2">
+      <h4 style="font-family:var(--font-display);font-size:0.9rem;font-weight:700;margin-bottom:0.75rem;">📍 Adresse de livraison</h4>
+      <address style="font-style:normal;font-size:0.85rem;line-height:1.9;color:var(--text-muted);margin:0;">
+        <strong style="color:var(--text);">{{ order.shipping_full_name }}</strong><br>
+        {{ order.shipping_address_line1 }}
+        {% if order.shipping_address_line2 %}<br>{{ order.shipping_address_line2 }}{% endif %}<br>
+        {{ order.shipping_city }} {{ order.shipping_postal_code }}<br>
+        {{ order.shipping_country }}<br>
+        {% if order.shipping_phone_number %}📞 {{ order.shipping_phone_number }}{% endif %}
+      </address>
+    </div>
+
+    <!-- Actions -->
+    <div class="d-flex flex-column gap-2 reveal stagger-3">
+      <a href="{% url 'orders:order_history' %}" class="btn btn-outline-primary btn-sm">
+        ← Toutes mes commandes
+      </a>
+      {% if order.invoice_file %}
+        <a href="{% url 'orders:invoice_download' order.pk %}" class="btn btn-secondary btn-sm">
+          📄 Télécharger la facture PDF
+        </a>
+      {% endif %}
+      <a href="{% url 'catalog:product_list' %}" class="btn btn-primary btn-sm">
+        🛍️ Continuer mes achats
+      </a>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

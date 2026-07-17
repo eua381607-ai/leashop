@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}{% if active_category %}{{ active_category.name }} — {% endif %}LeaShop{% endblock %}
+
+{% block content %}
+
+<!-- Hero Banner -->
+<section class="page-hero reveal mb-5">
+  <div class="row align-items-center g-4">
+    <div class="col-lg-7">
+      <p class="eyebrow">✨ Collection Premium</p>
+      <h1 class="display-5 fw-bold mb-3" style="font-family:var(--font-display);letter-spacing:-0.03em;color:#fff;">
+        {% if active_category %}
+          {{ active_category.name }}
+        {% elif query %}
+          Résultats pour &laquo;&nbsp;{{ query }}&nbsp;&raquo;
+        {% else %}
+          Découvrez nos produits <br><span style="background:linear-gradient(90deg,#a5b4fc,#2dd4bf);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">modernes &amp; élégants</span>
+        {% endif %}
+      </h1>
+      <p class="mb-4" style="color:rgba(255,255,255,0.72);font-size:1.05rem;max-width:480px;">
+        Une expérience shopping fluide et inspirée — des produits soigneusement sélectionnés pour mettre en valeur votre style.
+      </p>
+      <div class="d-flex flex-wrap gap-3">
+        <a class="btn btn-lg" href="#products"
+           style="background:rgba(255,255,255,0.18);border:1.5px solid rgba(255,255,255,0.35);color:#fff;border-radius:999px;backdrop-filter:blur(8px);">
+          Explorer ↓
+        </a>
+        <a class="btn btn-outline-light btn-lg" href="{% url 'cart:cart_detail' %}">
+          🛒 Mon panier
+        </a>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="hero-card reveal-right">
+        <div class="hero-badge">🚚 Livraison rapide disponible</div>
+        <h2 class="h5 fw-bold mb-3" style="color:#fff;">Pourquoi choisir LeaShop ?</h2>
+        <ul class="list-unstyled hero-highlights mb-0">
+          <li>Produits soigneusement sélectionnés</li>
+          <li>Paiement 100 % sécurisé (Stripe &amp; Mobile Money)</li>
+          <li>Interface moderne et intuitive</li>
+          <li>Factures professionnelles par e-mail</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features strip -->
+<section class="row g-3 mb-5">
+  <div class="col-md-4 reveal stagger-1">
+    <div class="feature-card h-100">
+      <div class="feature-icon">⚡</div>
+      <h3 class="h6 fw-bold mb-2" style="font-family:var(--font-display);">Expérience fluide</h3>
+      <p class="mb-0" style="font-size:0.88rem;color:var(--text-muted);">Navigation rapide, parcours d'achat clair et interface conçue pour rester agréable à chaque étape.</p>
+    </div>
+  </div>
+  <div class="col-md-4 reveal stagger-2">
+    <div class="feature-card h-100">
+      <div class="feature-icon">🛡️</div>
+      <h3 class="h6 fw-bold mb-2" style="font-family:var(--font-display);">Paiement sécurisé</h3>
+      <p class="mb-0" style="font-size:0.88rem;color:var(--text-muted);">Stripe Checkout, Mobile Money et chiffrement SSL pour une confiance totale sur chaque transaction.</p>
+    </div>
+  </div>
+  <div class="col-md-4 reveal stagger-3">
+    <div class="feature-card h-100">
+      <div class="feature-icon">📄</div>
+      <h3 class="h6 fw-bold mb-2" style="font-family:var(--font-display);">Factures professionnelles</h3>
+      <p class="mb-0" style="font-size:0.88rem;color:var(--text-muted);">Chaque commande payée génère automatiquement une facture PDF envoyée par e-mail.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Products Section -->
+<div id="products">
+  <div class="products-section-header reveal">
+    <div>
+      <h2 class="products-title">
+        {% if active_category %}{{ active_category.name }}{% elif query %}Résultats pour &laquo;&nbsp;{{ query }}&nbsp;&raquo;{% else %}Nos produits{% endif %}
+      </h2>
+      <p style="color:var(--text-muted);font-size:0.88rem;margin-top:0.25rem;">
+        {{ page_obj.paginator.count }} produit{{ page_obj.paginator.count|pluralize }} disponible{{ page_obj.paginator.count|pluralize }}
+      </p>
+    </div>
+    <!-- Sort -->
+    <form method="get" class="d-flex align-items-center gap-2">
+      {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+      {% if active_category %}<input type="hidden" name="category" value="{{ active_category.slug }}">{% endif %}
+      <label class="small fw-semibold mb-0" style="color:var(--text-muted);white-space:nowrap;">Trier par :</label>
+      <select name="sort" class="form-select form-select-sm" style="border-radius:999px;min-width:140px;" onchange="this.form.submit()">
+        <option value="newest"    {% if sort == "newest"    %}selected{% endif %}>🆕 Nouveautés</option>
+        <option value="price_asc" {% if sort == "price_asc" %}selected{% endif %}>💰 Prix croissant</option>
+        <option value="price_desc"{% if sort == "price_desc"%}selected{% endif %}>💎 Prix décroissant</option>
+      </select>
+    </form>
+  </div>
+
+  <!-- Product Grid -->
+  <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-4 mt-0">
+    {% for product in page_obj %}
+      {% with default_variant=product.get_default_variant %}
+      <div class="col reveal stagger-{{ forloop.counter|divisibleby:4 }}">
+        <div class="product-card">
+
+          <!-- Image -->
+          <div class="product-card-img-wrap">
+            {% if product.primary_image %}
+              <img src="{{ product.primary_image.image.url }}"
+                   alt="{{ product.primary_image.alt_text|default:product.name }}"
+                   class="card-img-top">
+            {% else %}
+              <div class="product-img-placeholder card-img-top">
+                <span>🛍️</span>
+                <small style="font-size:0.72rem;">Pas d'image</small>
+              </div>
+            {% endif %}
+
+            <!-- Overlay on hover with quick-view -->
+            <div class="product-card-overlay">
+              <a href="{{ product.get_absolute_url }}"
+                 style="background:rgba(255,255,255,0.18);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:999px;padding:0.45rem 1.1rem;font-size:0.82rem;font-weight:700;text-decoration:none;transition:all 0.2s;">
+                👁 Voir le produit
+              </a>
+            </div>
+
+            <!-- Badges -->
+            {% if not product.in_stock %}
+              <span class="product-badge product-badge-soldout">Rupture</span>
+            {% elif product.created_at %}
+              <span class="product-badge product-badge-new">Nouveau</span>
+            {% endif %}
+          </div>
+
+          <!-- Body -->
+          <div class="card-body">
+            <h3 class="product-name mb-1">
+              <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
+            </h3>
+
+            <!-- Rating -->
+            {% if product.review_count %}
+              <div style="display:flex;align-items:center;gap:0.35rem;margin-bottom:0.4rem;">
+                <span class="rating-stars" style="font-size:0.8rem;">
+                  {% for i in "12345" %}{% if forloop.counter <= product.average_rating %}★{% else %}☆{% endif %}{% endfor %}
+                </span>
+                <span style="font-size:0.75rem;color:var(--text-muted);">({{ product.review_count }})</span>
+              </div>
+            {% endif %}
+
+            <div class="product-price">
+              {{ default_variant.price|default:product.base_price }} {% if STRIPE_CURRENCY %}{{ STRIPE_CURRENCY|upper }}{% else %}XOF{% endif %}
+            </div>
+
+            <div class="card-actions">
+              <a href="{{ product.get_absolute_url }}" class="btn btn-outline-primary btn-sm">
+                Voir les détails
+              </a>
+              {% if default_variant %}
+                <form method="post" action="{% url 'cart:cart_add' default_variant.id %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="quantity" value="1">
+                  <button type="submit"
+                          class="btn btn-primary btn-sm w-100 btn-add-to-cart"
+                          {% if not default_variant.is_in_stock %}disabled{% endif %}>
+                    {% if default_variant.is_in_stock %}🛒 Ajouter au panier{% else %}Indisponible{% endif %}
+                  </button>
+                </form>
+              {% else %}
+                <button class="btn btn-primary btn-sm w-100" disabled>Indisponible</button>
+              {% endif %}
+            </div>
+          </div><!-- /.card-body -->
+        </div><!-- /.product-card -->
+      </div><!-- /.col -->
+      {% endwith %}
+    {% empty %}
+      <div class="col-12">
+        <div class="cart-empty">
+          <div class="cart-empty-icon">🔍</div>
+          <h3 style="font-family:var(--font-display);margin-bottom:0.5rem;">Aucun produit trouvé</h3>
+          <p style="color:var(--text-muted);">Essayez une autre recherche ou explorez toutes nos catégories.</p>
+          <a href="{% url 'catalog:product_list' %}" class="btn btn-primary mt-2">Voir tous les produits</a>
+        </div>
+      </div>
+    {% endfor %}
+  </div><!-- /.row -->
+</div>
+
+<!-- Pagination -->
+{% include "includes/pagination.html" with page_obj=page_obj %}
+
+{% endblock %}

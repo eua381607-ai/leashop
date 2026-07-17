@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Mes commandes — LeaShop{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="order-header reveal" style="margin-bottom:2rem;">
+  <div>
+    <div style="font-size:0.78rem;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.3rem;">Espace client</div>
+    <h1 style="font-family:var(--font-display);font-size:1.8rem;margin:0;">Mes commandes</h1>
+    <div style="font-size:0.85rem;color:rgba(255,255,255,0.65);margin-top:0.3rem;">
+      Retrouvez l'historique complet de vos achats
+    </div>
+  </div>
+  <a href="{% url 'catalog:product_list' %}" class="btn btn-outline-light btn-sm">
+    ← Continuer mes achats
+  </a>
+</div>
+
+{% if orders %}
+
+  <!-- Stats rapides -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-card reveal" style="--delay:0.1s;">
+        <div class="stat-label">Total commandes</div>
+        <div class="stat-value counter" data-target="{{ orders|length }}">{{ orders|length }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card reveal" style="--delay:0.15s;">
+        <div class="stat-label">En cours</div>
+        <div class="stat-value">
+          {{ orders|length }}
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card reveal" style="--delay:0.2s;">
+        <div class="stat-label">Payées</div>
+        <div class="stat-value" style="color:var(--color-success);">
+          {% with paid_count=0 %}
+          {% for o in orders %}{% if o.status == 'paid' %}{% with paid_count=paid_count|add:1 %}{% endwith %}{% endif %}{% endfor %}
+          {% endwith %}
+          {{ orders|length }}
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card reveal" style="--delay:0.25s;">
+        <div class="stat-label">Dernière commande</div>
+        <div class="stat-value" style="font-size:1rem;">
+          {% if orders %}{{ orders.0.created_at|date:"d/m/Y" }}{% else %}—{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders List -->
+  <div class="row g-4">
+    {% for order in orders %}
+    <div class="col-12 reveal" style="animation-delay:{{ forloop.counter0 }}00ms;">
+      <div class="order-table-wrapper" style="padding:0;overflow:hidden;">
+        <!-- Order Card Header -->
+        <div style="
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          flex-wrap:wrap;
+          gap:1rem;
+          padding:1.25rem 1.5rem;
+          border-bottom:1px solid rgba(255,255,255,0.07);
+          background:rgba(255,255,255,0.02);
+        ">
+          <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+            <!-- Order Icon -->
+            <div style="
+              width:44px;height:44px;
+              border-radius:12px;
+              background:linear-gradient(135deg,var(--color-primary),var(--color-secondary));
+              display:flex;align-items:center;justify-content:center;
+              font-size:1.1rem;flex-shrink:0;
+            ">🛒</div>
+            <div>
+              <div style="font-weight:700;font-size:1rem;margin-bottom:0.1rem;">
+                Commande <span style="color:var(--color-primary);">#{{ order.pk }}</span>
+              </div>
+              <div style="font-size:0.8rem;color:var(--color-muted);">
+                Passée le {{ order.created_at|date:"d/m/Y à H:i" }}
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+            <!-- Status Badge -->
+            <span class="status-badge
+              {% if order.status == 'pending' %}status-pending
+              {% elif order.status == 'paid' %}status-paid
+              {% elif order.status == 'shipped' %}status-shipped
+              {% elif order.status == 'delivered' %}status-delivered
+              {% elif order.status == 'cancelled' %}status-cancelled
+              {% elif order.status == 'refunded' %}status-refunded
+              {% else %}status-pending{% endif %}">
+              {% if order.status == 'pending' %}⏳{% elif order.status == 'paid' %}✅{% elif order.status == 'shipped' %}🚚{% elif order.status == 'delivered' %}📦{% elif order.status == 'cancelled' %}❌{% elif order.status == 'refunded' %}↩️{% endif %}
+              {{ order.get_status_display }}
+            </span>
+
+            <!-- Total -->
+            <div style="
+              background:rgba(var(--color-primary-rgb),0.1);
+              border:1px solid rgba(var(--color-primary-rgb),0.25);
+              border-radius:8px;
+              padding:0.35rem 0.85rem;
+              font-weight:700;
+              font-size:1rem;
+              color:var(--color-primary);
+            ">{{ order.total_amount }} €</div>
+
+            <!-- Action -->
+            <a href="{% url 'orders:order_detail' order.pk %}"
+               class="btn btn-outline-primary btn-sm"
+               style="white-space:nowrap;">
+              Voir le détail →
+            </a>
+          </div>
+        </div>
+
+        <!-- Order Items Preview -->
+        <div style="padding:1rem 1.5rem;">
+          <div style="display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;">
+            {% for item in order.items.all|slice:":4" %}
+              <div style="
+                display:flex;align-items:center;gap:0.5rem;
+                background:rgba(255,255,255,0.04);
+                border:1px solid rgba(255,255,255,0.07);
+                border-radius:8px;
+                padding:0.35rem 0.75rem;
+                font-size:0.8rem;
+              ">
+                <span style="color:var(--color-muted);">×{{ item.quantity }}</span>
+                <span>{{ item.product_name }}</span>
+                {% if item.variant_label %}
+                  <span style="color:var(--color-muted);font-size:0.75rem;">({{ item.variant_label }})</span>
+                {% endif %}
+              </div>
+            {% endfor %}
+            {% with total_items=order.items.count %}
+              {% if total_items > 4 %}
+                <div style="
+                  background:rgba(var(--color-primary-rgb),0.08);
+                  border:1px solid rgba(var(--color-primary-rgb),0.2);
+                  border-radius:8px;
+                  padding:0.35rem 0.75rem;
+                  font-size:0.8rem;
+                  color:var(--color-primary);
+                ">+{{ total_items|add:"-4" }} article(s)</div>
+              {% endif %}
+            {% endwith %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+{% else %}
+
+  <!-- Empty State -->
+  <div class="reveal" style="text-align:center;padding:5rem 1rem;">
+    <div style="
+      font-size:5rem;
+      margin-bottom:1.5rem;
+      filter:drop-shadow(0 0 30px rgba(var(--color-primary-rgb),0.4));
+      animation:float 3s ease-in-out infinite;
+    ">🛍️</div>
+    <h2 style="font-family:var(--font-display);font-size:1.8rem;margin-bottom:0.75rem;">
+      Votre historique est vide
+    </h2>
+    <p style="color:var(--color-muted);max-width:400px;margin:0 auto 2rem;">
+      Vous n'avez encore passé aucune commande. Découvrez notre catalogue et faites votre premier achat !
+    </p>
+    <a href="{% url 'catalog:product_list' %}" class="btn btn-primary btn-lg">
+      Découvrir le catalogue
+    </a>
+  </div>
+
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Commande confirmée ! — LeaShop{% endblock %}
+
+{% block content %}
+
+<!-- Confetti + Success hero -->
+<div class="success-hero reveal">
+
+  <!-- Animated check -->
+  <div class="success-check">✓</div>
+
+  <h1 class="success-title mb-2">Commande confirmée !</h1>
+  <p style="color:var(--text-muted);font-size:1.05rem;margin-bottom:0.5rem;">
+    Commande <strong>#{{ order.pk }}</strong> —
+    {% if order.status == "paid" %}
+      <span style="color:var(--success);font-weight:700;">Paiement effectué avec succès ✅</span>
+    {% else %}
+      <span style="color:var(--warning);font-weight:700;">En attente de confirmation...</span>
+    {% endif %}
+  </p>
+  {% if order.status == "paid" %}
+  <p style="color:var(--text-muted);font-size:0.95rem;">
+    Quittance envoyée par mail à l'adresse : <strong>{{ order.email }}</strong>
+  </p>
+  {% else %}
+  <p style="color:var(--text-muted);font-size:0.95rem;">
+    Un e-mail de confirmation avec votre facture PDF vous sera envoyé à <strong>{{ order.email }}</strong> dès réception du paiement.
+  </p>
+  {% endif %}
+
+  {% if order.payment_method == "mobile_money" and order.status != "paid" %}
+    <div class="alert alert-warning d-inline-flex mt-3" style="text-align:left;max-width:480px;">
+      📱
+      {% if order.mobile_money_transaction_id %}
+        Nous avons envoyé une demande Mobile Money au <strong>{{ order.mobile_money_phone }}</strong>.
+        Confirmez depuis votre téléphone puis rafraîchissez cette page.
+      {% else %}
+        Votre commande Mobile Money est enregistrée pour le numéro <strong>{{ order.mobile_money_phone }}</strong>.
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% if can_confirm_mobile_money_locally %}
+    <form method="post" action="{% url 'orders:confirm_mobile_money_locally' order.pk %}" class="mt-3">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-success">✅ Confirmer le paiement local (test)</button>
+    </form>
+  {% endif %}
+
+</div>
+
+<!-- What's next -->
+<div class="row g-4 mb-4">
+  <div class="col-12 reveal">
+    <h2 class="h5 fw-bold mb-3" style="font-family:var(--font-display);">📋 Et maintenant ?</h2>
+    <div class="next-steps">
+      <div class="next-step-item">
+        <div class="next-step-num">1</div>
+        <div>
+          <div style="font-weight:700;font-size:0.88rem;margin-bottom:0.2rem;">Confirmation e-mail</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">Un e-mail avec votre facture PDF vous a été envoyé automatiquement.</div>
+        </div>
+      </div>
+      <div class="next-step-item">
+        <div class="next-step-num">2</div>
+        <div>
+          <div style="font-weight:700;font-size:0.88rem;margin-bottom:0.2rem;">Traitement en cours</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">Votre commande est en cours de préparation par notre équipe.</div>
+        </div>
+      </div>
+      <div class="next-step-item">
+        <div class="next-step-num">3</div>
+        <div>
+          <div style="font-weight:700;font-size:0.88rem;margin-bottom:0.2rem;">Expédition</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">Vous serez notifié dès que votre commande sera expédiée.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Actions -->
+<div class="d-flex flex-wrap gap-3 justify-content-center reveal">
+  <a href="{% url 'orders:order_detail' order.pk %}" class="btn btn-primary btn-lg">
+    📦 Voir ma commande
+  </a>
+  <a href="{% url 'catalog:product_list' %}" class="btn btn-outline-primary btn-lg">
+    🛍️ Continuer mes achats
+  </a>
+  {% if order.invoice_file %}
+    <a href="{% url 'orders:invoice_download' order.pk %}" class="btn btn-secondary btn-lg">
+      📄 Télécharger la facture
+    </a>
+  {% endif %}
+</div>
+
+{% endblock %}

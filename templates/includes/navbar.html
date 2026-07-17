@@ -1,0 +1,123 @@
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container">
+
+    <!-- Brand -->
+    <a class="navbar-brand" href="{% url 'catalog:product_list' %}">
+      <span class="brand-icon">L</span>
+      <span>LeaShop</span>
+    </a>
+
+    <!-- Mobile toggle -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-label="Menu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="mainNav">
+
+      <!-- Left nav -->
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-lg-center">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            🗂 Catégories
+          </a>
+          <ul class="dropdown-menu shadow-lg border-0">
+            {% for category in nav_categories %}
+              <li>
+                <a class="dropdown-item" href="{% url 'catalog:category_detail' category.slug %}">
+                  {{ category.name }}
+                </a>
+              </li>
+            {% empty %}
+              <li><span class="dropdown-item-text text-muted">Aucune catégorie</span></li>
+            {% endfor %}
+          </ul>
+        </li>
+        {% if user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'accounts:profile' %}">📊 Mon espace</a>
+          </li>
+        {% endif %}
+      </ul>
+
+      <!-- Search -->
+      <form class="d-flex me-3 search-form position-relative" method="get" action="{% url 'catalog:product_list' %}">
+        <button type="submit" class="search-icon-btn" aria-label="Rechercher">🔍</button>
+        <input class="form-control" type="search" name="q"
+               placeholder="Rechercher un produit..."
+               value="{{ query|default:'' }}"
+               autocomplete="off">
+      </form>
+
+      <!-- Right tools -->
+      <div class="d-flex align-items-center gap-2">
+
+        <!-- Language switcher -->
+        <div class="translate-shell">
+          <div id="google_translate_element"></div>
+        </div>
+
+        <!-- Theme toggle -->
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Changer de thème">
+          <span class="theme-icon">☀️</span>
+        </button>
+
+        <!-- Cart -->
+        <a class="nav-link d-flex align-items-center gap-1 position-relative" href="{% url 'cart:cart_detail' %}" style="padding: 0.5rem 0.9rem !important; border-radius: 999px;">
+          🛒
+          <span class="d-none d-lg-inline">Panier</span>
+          {% if current_cart.total_quantity %}
+            <span class="nav-badge">{{ current_cart.total_quantity }}</span>
+          {% endif %}
+        </a>
+
+        <!-- User menu -->
+        {% if user.is_authenticated %}
+          <div class="dropdown">
+            <a class="nav-link dropdown-toggle d-flex align-items-center gap-1" href="#"
+               role="button" data-bs-toggle="dropdown" style="padding: 0.5rem 0.9rem !important; border-radius: 999px;">
+              <span style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#14b8a6);display:grid;place-items:center;font-size:0.75rem;font-weight:800;color:#fff;flex-shrink:0;">
+                {% if user.first_name %}
+                  {{ user.first_name|first|upper }}
+                {% elif user.username %}
+                  {{ user.username|first|upper }}
+                {% else %}
+                  U
+                {% endif %}
+              </span>
+              <span class="d-none d-lg-inline">{{ user.first_name|default:user.username|default:"Profil" }}</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0">
+              <li>
+                <a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                  👤 Mon profil
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{% url 'orders:order_history' %}">
+                  📦 Mes commandes
+                </a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <form method="post" action="{% url 'accounts:logout' %}">
+                  {% csrf_token %}
+                  <button class="dropdown-item text-danger" type="submit">
+                    🚪 Déconnexion
+                  </button>
+                </form>
+              </li>
+            </ul>
+          </div>
+        {% else %}
+          <a class="nav-link" href="{% url 'accounts:login' %}" style="padding: 0.5rem 0.9rem !important; border-radius: 999px;">
+            Connexion
+          </a>
+          <a class="nav-link nav-link-highlight" href="{% url 'accounts:signup' %}" style="padding: 0.5rem 1.1rem !important; border-radius: 999px;">
+            S'inscrire
+          </a>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</nav>
