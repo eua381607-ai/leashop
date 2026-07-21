@@ -1,13 +1,12 @@
 from io import BytesIO
 import json
 import logging
-import smtplib
 
 import requests
 import stripe
 from django.conf import settings
 from django.core.files.base import ContentFile
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.db import transaction
 from django.urls import reverse
 from reportlab.lib.pagesizes import letter
@@ -499,9 +498,30 @@ def _build_invoice_pdf(order):
 
 
 def _send_payment_confirmation_email(order):
-    invoice_bytes = _build_invoice_pdf(order)
+    """Sends a payment confirmation email with the invoice PDF attached.
+
+    Logs clearly on success or failure so Railway logs make it easy to diagnose
+    email delivery issues without needing to re-run the webhook.
+    """
+    logger.info(
+        "Sending payment confirmation email for order %s to %s (backend: %s, from: %s)",
+        order.pk,
+        order.email,
+        settings.EMAIL_BACKEND,
+        settings.DEFAULT_FROM_EMAIL,
+    )
+
+    try:
+        invoice_bytes = _build_invoice_pdf(order)
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Failed to generate invoice PDF for order %s: %s", order.pk, exc, exc_info=True)
+        return
+
     filename = f"facture-LEASHOP-{order.pk:06d}.pdf"
-    order.invoice_file.save(filename, ContentFile(invoice_bytes), save=True)
+    try:
+        order.invoice_file.save(filename, ContentFile(invoice_bytes), save=True)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Could not save invoice file for order %s: %s", order.pk, exc)
 
     invoice_url = settings.SITE_BASE_URL.rstrip("/") + reverse("orders:invoice_download", args=[order.pk])
     subject = f"Facture confirmée — Commande #{order.pk} — LeaShop"
@@ -512,12 +532,110 @@ def _send_payment_confirmation_email(order):
         "Merci pour votre confiance et à bientôt sur LeaShop !\n\n"
         "— L'équipe LeaShop"
     )
-    message = EmailMessage(subject, body, settings.DEFAULT_FROM_EMAIL, [order.email])
+    
+    # Construct professional HTML version
+    items_html = ""
+    for item in order.items.all():
+        variant_desc = f" ({item.variant_label})" if item.variant_label else ""
+        items_html += f"""
+        <tr>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;">{item.product_name}{variant_desc}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">{item.quantity}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">{item.unit_price} €</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">{item.line_total} €</td>
+        </tr>
+        """
+        
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>Facture confirmée</title>
+    </head>
+    <body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f5f7; margin: 0; padding: 0; color: #333;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f5f7; padding: 20px 0;">
+            <tr>
+                <td align="center">
+                    <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                        <!-- Header -->
+                        <tr>
+                            <td style="background-color: #4f46e5; padding: 30px; text-align: center; color: #ffffff;">
+                                <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 1px;">LeaShop</h1>
+                                <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.85;">Votre paiement a été validé !</p>
+                            </td>
+                        </tr>
+                        <!-- Content -->
+                        <tr>
+                            <td style="padding: 40px 30px;">
+                                <h2 style="margin-top: 0; color: #111827; font-size: 20px;">Bonjour {order.shipping_full_name or 'Client'},</h2>
+                                <p style="font-size: 15px; line-height: 1.6; color: #4b5563;">
+                                    Nous vous confirmons que votre paiement pour la commande <strong>#{order.pk}</strong> a été validé avec succès. Votre facture est maintenant disponible.
+                                </p>
+                                
+                                <div style="margin: 30px 0; text-align: center;">
+                                    <a href="{invoice_url}" style="background-color: #4f46e5; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">
+                                        Télécharger ma facture PDF
+                                    </a>
+                                </div>
+
+                                <!-- Order items table -->
+                                <h3 style="color: #111827; font-size: 16px; border-bottom: 2px solid #f3f4f6; padding-bottom: 8px; margin-top: 30px;">Détails de la commande</h3>
+                                <table width="100%" cellpadding="0" cellspacing="0" style="font-size: 14px; margin-bottom: 20px;">
+                                    <thead>
+                                        <tr style="color: #9ca3af; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">
+                                            <th align="left" style="padding: 10px 5px; border-bottom: 1px solid #e5e7eb;">Désignation</th>
+                                            <th align="center" style="padding: 10px 5px; border-bottom: 1px solid #e5e7eb;">Qté</th>
+                                            <th align="right" style="padding: 10px 5px; border-bottom: 1px solid #e5e7eb;">Prix U.</th>
+                                            <th align="right" style="padding: 10px 5px; border-bottom: 1px solid #e5e7eb;">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {items_html}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td colspan="3" align="right" style="padding: 15px 10px 5px 10px; font-weight: bold; color: #4b5563;">TOTAL TTC :</td>
+                                            <td align="right" style="padding: 15px 5px 5px 5px; font-weight: bold; color: #4f46e5; font-size: 16px;">{order.total_amount} €</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+
+                                <p style="font-size: 14px; color: #6b7280; margin-top: 30px; line-height: 1.5;">
+                                    Une copie de votre facture au format PDF a également été jointe à cet e-mail.
+                                </p>
+                            </td>
+                        </tr>
+                        <!-- Footer -->
+                        <tr>
+                            <td style="background-color: #f9fafb; padding: 25px; text-align: center; border-top: 1px solid #f3f4f6; color: #9ca3af; font-size: 12px;">
+                                <p style="margin: 0 0 5px 0; font-weight: bold; color: #6b7280;">LeaShop SAS</p>
+                                <p style="margin: 0;">1 Rue du Commerce, 75001 Paris &bull; contact@leashop.fr</p>
+                                <p style="margin: 10px 0 0 0; font-size: 11px;">Vous recevez cet e-mail suite à un achat effectué sur notre site.</p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
+
+    message = EmailMultiAlternatives(subject, body, settings.DEFAULT_FROM_EMAIL, [order.email])
+    message.attach_alternative(html_content, "text/html")
     message.attach(filename, invoice_bytes, "application/pdf")
     try:
         message.send(fail_silently=False)
-    except (OSError, smtplib.SMTPException) as exc:
-        logger.warning("Payment confirmation email could not be sent for order %s: %s", order.pk, exc)
+        logger.info(
+            "✅ Payment confirmation email sent successfully for order %s to %s",
+            order.pk, order.email,
+        )
+    except Exception as exc:  # noqa: BLE001 — catch-all so a bad email never breaks the webhook response
+        logger.error(
+            "❌ Error sending payment confirmation email for order %s to %s: %s",
+            order.pk, order.email, exc, exc_info=True,
+        )
 
 
 @transaction.atomic

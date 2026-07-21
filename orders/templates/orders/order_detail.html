@@ -38,7 +38,7 @@
   <!-- ── Articles ────────────────────────────────────────────── -->
   <div class="col-lg-8">
     <div class="order-table-wrapper reveal">
-      <table class="table table-hover mb-0">
+      <table class="table order-items-table mb-0">
         <thead>
           <tr>
             <th>Article</th>
@@ -54,23 +54,23 @@
                 <div style="font-weight:700;font-size:1.05rem;color:var(--text);">
                   {{ item.product_name }}
                   {% if item.variant_label %}
-                    <span style="font-size:0.9rem;color:#64748b;font-weight:normal;"> - {{ item.variant_label }}</span>
+                    <span style="font-size:0.9rem;color:var(--text-muted);font-weight:normal;"> — {{ item.variant_label }}</span>
                   {% endif %}
                 </div>
-                <div style="font-size:0.8rem;color:#64748b;">Réf. {{ item.sku }}</div>
+                <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.15rem;">Réf. {{ item.sku }}</div>
               </td>
               <td class="text-center">
                 <span style="font-weight:600;color:var(--text);">{{ item.quantity }}</span>
               </td>
-              <td class="text-end" style="color:#64748b;">{{ item.unit_price }}</td>
-              <td class="text-end" style="font-weight:700;color:var(--brand-600);">{{ item.line_total }}</td>
+              <td class="text-end" style="color:var(--text-muted);">{{ item.unit_price }} €</td>
+              <td class="text-end" style="font-weight:700;color:var(--color-primary);">{{ item.line_total }} €</td>
             </tr>
           {% endfor %}
         </tbody>
         <tfoot>
           <tr>
             <td colspan="3" class="text-end fw-bold" style="font-size:1rem;padding:1rem 1.25rem;">TOTAL</td>
-            <td class="text-end" style="font-size:1.2rem;font-weight:900;color:var(--brand-600);padding:1rem 1.25rem;">
+            <td class="text-end" style="font-size:1.2rem;font-weight:900;color:var(--color-primary);padding:1rem 1.25rem;">
               {{ order.total_amount }}
             </td>
           </tr>
@@ -136,13 +136,22 @@
 
     </div><!-- /.order-timeline -->
 
-    {% if can_confirm_mobile_money_locally %}
-      <form method="post" action="{% url 'orders:confirm_mobile_money_locally' order.pk %}" class="mt-3">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-success">
-          ✅ Confirmer le paiement Mobile Money (local)
-        </button>
-      </form>
+    {% if can_confirm_payment %}
+      <div class="mt-4 p-3 rounded-3" style="background:var(--surface-2);border:2px dashed var(--brand-500);">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span style="background:var(--brand-500);color:#fff;font-size:0.7rem;padding:2px 8px;border-radius:4px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Admin</span>
+          <span style="font-weight:700;font-size:0.9rem;color:var(--text);">Confirmer le paiement</span>
+        </div>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">
+          Le stock sera décrémenté et un e-mail de confirmation avec facture PDF sera envoyé au client.
+        </p>
+        <form method="post" action="{% url 'orders:confirm_payment' order.pk %}" onsubmit="return confirm('Confirmer le paiement de la commande #{{ order.pk }} ?\n\nCette action est irréversible.');">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success w-100" style="font-weight:700;">
+            ✅ Confirmer le paiement — Envoyer la facture
+          </button>
+        </form>
+      </div>
     {% endif %}
   </div>
 
@@ -166,7 +175,7 @@
           <strong>{{ order.get_payment_method_display }}</strong>
         </div>
         <div><span style="color:var(--text-muted);">Total :</span>
-          <strong style="color:var(--brand-600);">{{ order.total_amount }}</strong>
+          <strong style="color:var(--color-primary);">{{ order.total_amount }}</strong>
         </div>
       </div>
     </div>

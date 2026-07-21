@@ -158,13 +158,11 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@leashop.local")
 _EMAIL_PROVIDER = env("EMAIL_PROVIDER", default="console")
 
 if _EMAIL_PROVIDER == "resend":
-    # Resend configuration (using their SMTP interface, which is the easiest and most robust with Django attachments)
-    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-    EMAIL_HOST = "smtp.resend.com"
-    EMAIL_PORT = 465
-    EMAIL_HOST_USER = "resend"
-    EMAIL_HOST_PASSWORD = env("RESEND_API_KEY", default="")
-    EMAIL_USE_SSL = True
+    # Resend — native HTTP API backend (more reliable than SMTP relay)
+    # Supports attachments and gives clear error messages.
+    # Requires: pip install resend  (already in requirements.txt)
+    EMAIL_BACKEND = "payments.email_backends.ResendEmailBackend"
+    RESEND_API_KEY = env("RESEND_API_KEY", default="")
 elif _EMAIL_PROVIDER == "smtp":
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
     EMAIL_HOST = env("EMAIL_HOST", default="localhost")
@@ -173,6 +171,7 @@ elif _EMAIL_PROVIDER == "smtp":
     EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
     EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
     EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
+    EMAIL_TIMEOUT = 30
 else:
     # Default to console in development
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

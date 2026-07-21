@@ -1,4 +1,6 @@
+import logging
 import requests
+import stripe
 
 from django.conf import settings
 from django.contrib import messages
@@ -19,6 +21,8 @@ from payments.services import (
 from . import services
 from .models import Order
 
+logger = logging.getLogger(__name__)
+
 
 def _checkout_context(cart, addresses, form):
     return {
@@ -30,12 +34,8 @@ def _checkout_context(cart, addresses, form):
     }
 
 
-def _can_confirm_mobile_money_locally(order):
-    return (
-        settings.DEBUG
-        and order.payment_method == "mobile_money"
-        and order.status == Order.Status.PENDING
-    )
+def _can_confirm_payment(order):
+    return order.status == Order.Status.PENDING
 
 
 @login_required
@@ -127,7 +127,18 @@ def checkout_view(request):
             return redirect("cart:cart_detail")
 
         if payment_method == "card":
-            checkout_url = create_checkout_session(request, order)
+            try:
+                checkout_url = create_checkout_session(request, order)
+            except stripe.error.StripeError as exc:
+                logger.error("Stripe error for order %s: %s", order.pk, exc)
+                order.status = Order.Status.CANCELLED
+                order.save(update_fields=["status", "updated_at"])
+                messages.error(
+                    request,
+                    "Le paiement Stripe n\u2019a pas pu \u00eatre initialis\u00e9. "
+                    "Votre commande a \u00e9t\u00e9 annul\u00e9e, veuillez r\u00e9essayer ou contacter le support.",
+                )
+                return redirect("orders:order_detail", pk=order.pk)
             return redirect(checkout_url)
 
         if payment_method == "fedapay":
@@ -173,7 +184,7 @@ def order_success_view(request, pk):
         "orders/order_success.html",
         {
             "order": order,
-            "can_confirm_mobile_money_locally": _can_confirm_mobile_money_locally(order),
+            "can_confirm_payment": _can_confirm_payment(order) and request.user.is_staff,
         },
     )
 
@@ -194,31 +205,33 @@ def order_detail_view(request, pk):
         "orders/order_detail.html",
         {
             "order": order,
-            "can_confirm_mobile_money_locally": _can_confirm_mobile_money_locally(order),
+            "can_confirm_payment": _can_confirm_payment(order) and request.user.is_staff,
         },
     )
 
 
 @login_required
 @require_POST
-def confirm_mobile_money_locally_view(request, pk):
-    if not settings.DEBUG:
-        raise Http404("Confirmation locale indisponible.")
+def confirm_payment_view(request, pk):
+    """Staff/admin manually confirms a pending payment.
+    Triggers fulfillment (stock decrement, PDF invoice, confirmation email).
+    """
+    if not request.user.is_staff:
+        messages.error(request, "Vous n'avez pas la permission de confirmer un paiement.")
+        return redirect("orders:order_detail", pk=pk)
 
-    order = get_object_or_404(Order, pk=pk, user=request.user)
-    if not _can_confirm_mobile_money_locally(order):
-        messages.warning(request, "Cette commande ne peut pas être confirmée localement.")
+    order = get_object_or_404(Order, pk=pk)
+    if not _can_confirm_payment(order):
+        messages.warning(request, "Cette commande ne peut pas être confirmée.")
         return redirect("orders:order_detail", pk=order.pk)
 
-    transaction_id = order.mobile_money_transaction_id or f"local-{order.pk}"
-    order.mobile_money_transaction_id = transaction_id
-    order.save(update_fields=["mobile_money_transaction_id", "updated_at"])
-    fulfill_order(order, payment_intent_id=f"mobile_money:{transaction_id}")
+    transaction_id = order.mobile_money_transaction_id or f"pay-{order.pk}"
+    fulfill_order(order, payment_intent_id=f"manual:{transaction_id}")
     messages.success(
         request,
-        "Paiement Mobile Money confirmé en local. La quittance a été générée et le mail envoyé.",
+        f"Paiement de la commande #{order.pk} confirmé. Facture générée et mail envoyé à {order.email}.",
     )
-    return redirect("orders:order_detail", pk=order.pk)
+    return redirect("orders:order_success", pk=order.pk)
 
 
 @login_required

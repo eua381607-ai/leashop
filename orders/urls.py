@@ -9,9 +9,9 @@ urlpatterns = [
     path("success/<int:pk>/", views.order_success_view, name="order_success"),
     path("history/", views.order_history_view, name="order_history"),
     path(
-        "<int:pk>/confirm-mobile-money-local/",
-        views.confirm_mobile_money_locally_view,
-        name="confirm_mobile_money_locally",
+        "<int:pk>/confirm-payment/",
+        views.confirm_payment_view,
+        name="confirm_payment",
     ),
     path("invoice/<int:pk>/", views.invoice_download_view, name="invoice_download"),
     path("<int:pk>/", views.order_detail_view, name="order_detail"),

@@ -29,10 +29,10 @@
 
 <div class="row g-4">
 
-  <!-- ── Form ─────────────────────────────────────────────────── -->
+  <!-- ── Form ─────────────────────────────────────────── -->
   <div class="col-lg-7">
     <div class="checkout-panel reveal">
-      <form method="post" novalidate>
+      <form method="post" novalidate id="checkout-form">
         {% csrf_token %}
 
         <!-- Adresse de livraison -->
@@ -47,7 +47,7 @@
                 <input class="form-check-input mt-1 flex-shrink-0" type="radio"
                        name="address_id" value="{{ address.id }}"
                        id="address-{{ address.id }}"
-                       {% if address.is_default %}checked{% endif %}>
+                       {% if address.is_default %}checked{% elif forloop.first %}checked{% endif %}>
                 <div>
                   <strong>{{ address.full_name }}</strong>
                   {% if address.is_default %}<span class="badge ms-2" style="background:var(--brand-500);font-size:0.68rem;">Par défaut</span>{% endif %}
@@ -74,10 +74,10 @@
           <input type="hidden" name="address_id" value="new">
         {% endif %}
 
-        <!-- New address form -->
+        <!-- New address form — id=new-address-panel, visibility driven by JS -->
         <div class="new-address-panel mt-3 p-3 rounded-3"
-             style="background:var(--surface-2);border:1px solid var(--border-subtle);"
-             {% if addresses %}style="display:none;"{% endif %}>
+             id="new-address-panel"
+             style="background:var(--surface-2);border:1px solid var(--border-subtle);{% if addresses %}display:none;{% endif %}">
           {{ new_address_form.non_field_errors }}
           <div class="row g-2">
             <div class="col-md-6">
@@ -136,7 +136,7 @@
           💳 Mode de paiement
         </div>
 
-        <label class="payment-method-btn {% if not mobile_money_available %}active{% endif %}" for="payment-card">
+        <label class="payment-method-btn active" for="payment-card">
           <input class="form-check-input visually-hidden" type="radio"
                  name="payment_method" value="card" id="payment-card" checked>
           <span class="payment-method-icon">💳</span>
@@ -158,8 +158,8 @@
             </div>
           </label>
 
-          <div id="mobile-money-panel" class="d-none mt-2 p-3 rounded-3"
-               style="background:var(--surface-2);border:1px solid var(--border-subtle);">
+          <div id="mobile-money-panel" class="mt-2 p-3 rounded-3"
+               style="background:var(--surface-2);border:1px solid var(--border-subtle);display:none;">
             <div class="form-group">
               <label class="form-label" for="mobile-money-phone">📞 Numéro Mobile Money</label>
               <input type="tel" class="form-control" id="mobile-money-phone"
@@ -183,7 +183,7 @@
         {% endif %}
 
         <!-- Submit -->
-        <button type="submit" class="btn btn-primary btn-lg w-100 mt-4">
+        <button type="submit" class="btn btn-primary btn-lg w-100 mt-4" id="checkout-submit-btn">
           🔒 Continuer vers le paiement
         </button>
 
@@ -191,7 +191,7 @@
     </div>
   </div>
 
-  <!-- ── Summary ─────────────────────────────────────────────── -->
+  <!-- ── Summary ─────────────────────────────────── -->
   <div class="col-lg-5">
     <div class="checkout-summary reveal stagger-2">
       <h2 class="h5 fw-bold mb-3" style="font-family:var(--font-display);">🧾 Récapitulatif</h2>
@@ -236,4 +236,50 @@
 
 </div><!-- /.row -->
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  'use strict';
+
+  /* -- Address panel toggle ---------------------------------- */
+  var nap = document.getElementById('new-address-panel');
+  var ars = document.querySelectorAll('input[name="address_id"]');
+
+  function syncAddr() {
+    var s = document.querySelector('input[name="address_id"]:checked');
+    if (nap) nap.style.display = (s && s.value === 'new') ? 'block' : 'none';
+  }
+  ars.forEach(function (r) { r.addEventListener('change', syncAddr); });
+  syncAddr();
+
+  /* -- Payment method panel toggle + active label styling ---- */
+  var mmp = document.getElementById('mobile-money-panel');
+  var prs = document.querySelectorAll('input[name="payment_method"]');
+
+  function syncPay() {
+    var s = document.querySelector('input[name="payment_method"]:checked');
+    if (!s) return;
+    document.querySelectorAll('.payment-method-btn').forEach(function (b) {
+      b.classList.remove('active');
+    });
+    var lbl = document.querySelector('label[for="' + s.id + '"]');
+    if (lbl) lbl.classList.add('active');
+    if (mmp) mmp.style.display = (s.value === 'mobile_money') ? 'block' : 'none';
+  }
+  prs.forEach(function (r) { r.addEventListener('change', syncPay); });
+  syncPay();
+
+  /* -- Anti double-click on submit --------------------------- */
+  var form = document.getElementById('checkout-form');
+  var btn  = document.getElementById('checkout-submit-btn');
+  if (form && btn) {
+    form.addEventListener('submit', function () {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Redirection…';
+    });
+  }
+})();
+</script>
 {% endblock %}

@@ -81,9 +81,9 @@ class CheckoutFlowTests(TestCase):
         self.assertEqual(order.status, Order.Status.PAID)
         self.assertTrue(order.invoice_file)
         self.assertTrue(order.invoice_file.name.endswith(".pdf"))
-        self.assertIn("quittance", order.invoice_file.name)
+        self.assertIn("facture", order.invoice_file.name)
         self.assertEqual(len(mail.outbox), 2)
-        self.assertIn("quittance", mail.outbox[1].body.lower())
+        self.assertIn("facture", mail.outbox[1].body.lower())
 
     def test_mobile_money_callback_fulfills_order_like_stripe_webhook(self):
         request = SimpleNamespace(user=self.user, cart=self.cart)
@@ -150,6 +150,8 @@ class CheckoutFlowTests(TestCase):
         self.assertEqual(self.variant.stock_quantity, 8)
 
     def test_local_mobile_money_confirmation_generates_receipt_and_email(self):
+        self.user.is_staff = True
+        self.user.save(update_fields=["is_staff"])
         self.client.force_login(self.user)
         request = SimpleNamespace(user=self.user, cart=self.cart)
         with self.captureOnCommitCallbacks(execute=True):
@@ -165,19 +167,18 @@ class CheckoutFlowTests(TestCase):
             with self.settings(MEDIA_ROOT=tmpdir):
                 with self.captureOnCommitCallbacks(execute=True):
                     response = self.client.post(
-                        reverse("orders:confirm_mobile_money_locally", args=[order.pk])
+                        reverse("orders:confirm_payment", args=[order.pk])
                     )
 
         order.refresh_from_db()
         self.variant.refresh_from_db()
-        self.assertRedirects(response, reverse("orders:order_detail", args=[order.pk]))
+        self.assertRedirects(response, reverse("orders:order_success", args=[order.pk]))
         self.assertEqual(order.status, Order.Status.PAID)
-        self.assertEqual(order.mobile_money_transaction_id, f"local-{order.pk}")
         self.assertTrue(order.invoice_file)
-        self.assertIn("quittance", order.invoice_file.name)
+        self.assertIn("facture", order.invoice_file.name)
         self.assertEqual(self.variant.stock_quantity, 8)
         self.assertEqual(len(mail.outbox), 2)
-        self.assertEqual(mail.outbox[1].attachments[0][0], f"quittance-{order.pk}.pdf")
+        self.assertEqual(mail.outbox[1].attachments[0][0], f"facture-LEASHOP-{order.pk:06d}.pdf")
 
     def test_checkout_with_no_selected_address_renders_the_form_instead_of_404ing(self):
         self.client.force_login(self.user)
