@@ -30,6 +30,7 @@ def _checkout_context(cart, addresses, form):
         "new_address_form": form,
         "cart": cart,
         "fedapay_available": bool(settings.FEDAPAY_SECRET_KEY),
+        "stripe_available": bool(settings.STRIPE_SECRET_KEY),
         "mobile_money_available": settings.DEBUG or bool(settings.MOBILE_MONEY_API_URL),
     }
 
@@ -79,7 +80,8 @@ def checkout_view(request):
                 _checkout_context(cart, addresses, form),
             )
 
-        payment_method = request.POST.get("payment_method", "card")
+        default_payment = "fedapay" if settings.FEDAPAY_SECRET_KEY else "card"
+        payment_method = request.POST.get("payment_method", default_payment)
         mobile_money_phone = request.POST.get("mobile_money_phone", "").strip()
 
         if payment_method not in {"card", "mobile_money", "fedapay"}:

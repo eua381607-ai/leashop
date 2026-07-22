@@ -136,24 +136,38 @@
           💳 Mode de paiement
         </div>
 
-        <label class="payment-method-btn active" for="payment-card">
-          <input class="form-check-input visually-hidden" type="radio"
-                 name="payment_method" value="card" id="payment-card" checked>
-          <span class="payment-method-icon">💳</span>
-          <div>
-            <div class="payment-method-label">Carte bancaire</div>
-            <div class="payment-method-sub">Visa, Mastercard via Stripe Checkout</div>
-          </div>
-          <span style="margin-left:auto;color:var(--brand-500);font-size:0.78rem;font-weight:700;">Sécurisé 🔒</span>
-        </label>
+        {% if fedapay_available %}
+          <label class="payment-method-btn active" for="payment-fedapay">
+            <input class="form-check-input visually-hidden" type="radio"
+                   name="payment_method" value="fedapay" id="payment-fedapay" checked>
+            <span class="payment-method-icon">💳</span>
+            <div>
+              <div class="payment-method-label">Carte bancaire ou Mobile Money</div>
+              <div class="payment-method-sub">Visa, Mastercard, MTN, Moov, Celtiis via FedaPay</div>
+            </div>
+            <span style="margin-left:auto;color:var(--brand-500);font-size:0.78rem;font-weight:700;">Sécurisé 🔒</span>
+          </label>
+        {% endif %}
 
-        {% if mobile_money_available %}
+        {% if stripe_available %}
+          <label class="payment-method-btn {% if not fedapay_available %}active{% endif %}" for="payment-card">
+            <input class="form-check-input visually-hidden" type="radio"
+                   name="payment_method" value="card" id="payment-card" {% if not fedapay_available %}checked{% endif %}>
+            <span class="payment-method-icon">💳</span>
+            <div>
+              <div class="payment-method-label">Carte bancaire (Stripe International)</div>
+              <div class="payment-method-sub">Visa, Mastercard via Stripe Checkout</div>
+            </div>
+          </label>
+        {% endif %}
+
+        {% if mobile_money_available and not fedapay_available %}
           <label class="payment-method-btn" for="payment-mobile-money">
             <input class="form-check-input visually-hidden" type="radio"
                    name="payment_method" value="mobile_money" id="payment-mobile-money">
             <span class="payment-method-icon">📱</span>
             <div>
-              <div class="payment-method-label">Mobile Money</div>
+              <div class="payment-method-label">Mobile Money Direct</div>
               <div class="payment-method-sub">MTN, Orange Money et autres</div>
             </div>
           </label>
@@ -168,18 +182,6 @@
               <div class="form-text">Une demande de validation sera envoyée sur ce numéro.</div>
             </div>
           </div>
-        {% endif %}
-
-        {% if fedapay_available %}
-          <label class="payment-method-btn" for="payment-fedapay">
-            <input class="form-check-input visually-hidden" type="radio"
-                   name="payment_method" value="fedapay" id="payment-fedapay">
-            <span class="payment-method-icon">🏦</span>
-            <div>
-              <div class="payment-method-label">FedaPay</div>
-              <div class="payment-method-sub">Mobile Money via FedaPay (Bénin)</div>
-            </div>
-          </label>
         {% endif %}
 
         <!-- Submit -->
