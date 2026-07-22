@@ -184,7 +184,7 @@ def order_success_view(request, pk):
         "orders/order_success.html",
         {
             "order": order,
-            "can_confirm_payment": _can_confirm_payment(order) and request.user.is_staff,
+            "can_confirm_payment": _can_confirm_payment(order),
         },
     )
 
@@ -205,7 +205,7 @@ def order_detail_view(request, pk):
         "orders/order_detail.html",
         {
             "order": order,
-            "can_confirm_payment": _can_confirm_payment(order) and request.user.is_staff,
+            "can_confirm_payment": _can_confirm_payment(order),
         },
     )
 
@@ -213,14 +213,10 @@ def order_detail_view(request, pk):
 @login_required
 @require_POST
 def confirm_payment_view(request, pk):
-    """Staff/admin manually confirms a pending payment.
+    """Manually confirms a pending payment.
     Triggers fulfillment (stock decrement, PDF invoice, confirmation email).
     """
-    if not request.user.is_staff:
-        messages.error(request, "Vous n'avez pas la permission de confirmer un paiement.")
-        return redirect("orders:order_detail", pk=pk)
-
-    order = get_object_or_404(Order, pk=pk)
+    order = get_object_or_404(Order, pk=pk, user=request.user)
     if not _can_confirm_payment(order):
         messages.warning(request, "Cette commande ne peut pas être confirmée.")
         return redirect("orders:order_detail", pk=order.pk)

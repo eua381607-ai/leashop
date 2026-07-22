@@ -137,18 +137,17 @@
     </div><!-- /.order-timeline -->
 
     {% if can_confirm_payment %}
-      <div class="mt-4 p-3 rounded-3" style="background:var(--surface-2);border:2px dashed var(--brand-500);">
+      <div class="mt-4 p-3 rounded-3" style="background:var(--surface-2);border:1px solid var(--brand-500);">
         <div class="d-flex align-items-center gap-2 mb-2">
-          <span style="background:var(--brand-500);color:#fff;font-size:0.7rem;padding:2px 8px;border-radius:4px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Admin</span>
-          <span style="font-weight:700;font-size:0.9rem;color:var(--text);">Confirmer le paiement</span>
+          <span style="font-weight:700;font-size:0.95rem;color:var(--text);">Paiement en attente</span>
         </div>
-        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">
-          Le stock sera décrémenté et un e-mail de confirmation avec facture PDF sera envoyé au client.
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.75rem;">
+          Validez votre paiement pour finaliser la commande et recevoir votre facture.
         </p>
-        <form method="post" action="{% url 'orders:confirm_payment' order.pk %}" onsubmit="return confirm('Confirmer le paiement de la commande #{{ order.pk }} ?\n\nCette action est irréversible.');">
+        <form method="post" action="{% url 'orders:confirm_payment' order.pk %}" onsubmit="return confirm('Confirmer le paiement de la commande #{{ order.pk }} ?');">
           {% csrf_token %}
           <button type="submit" class="btn btn-success w-100" style="font-weight:700;">
-            ✅ Confirmer le paiement — Envoyer la facture
+            ✅ Confirmer mon paiement
           </button>
         </form>
       </div>

@@ -30,7 +30,6 @@
         display:flex;gap:0.75rem;flex-wrap:wrap;justify-content:center;
         margin-bottom:1.75rem;
       ">
-        {% for perk in "Suivi commandes,Historique achats,Adresses sauvegardées"|split:"," %}
         <div style="
           display:flex;align-items:center;gap:0.4rem;
           background:rgba(var(--color-primary-rgb),0.08);
@@ -39,8 +38,25 @@
           padding:0.3rem 0.75rem;
           font-size:0.78rem;
           color:var(--color-primary);
-        ">✓ {{ perk }}</div>
-        {% endfor %}
+        ">✓ Suivi commandes</div>
+        <div style="
+          display:flex;align-items:center;gap:0.4rem;
+          background:rgba(var(--color-primary-rgb),0.08);
+          border:1px solid rgba(var(--color-primary-rgb),0.2);
+          border-radius:20px;
+          padding:0.3rem 0.75rem;
+          font-size:0.78rem;
+          color:var(--color-primary);
+        ">✓ Historique achats</div>
+        <div style="
+          display:flex;align-items:center;gap:0.4rem;
+          background:rgba(var(--color-primary-rgb),0.08);
+          border:1px solid rgba(var(--color-primary-rgb),0.2);
+          border-radius:20px;
+          padding:0.3rem 0.75rem;
+          font-size:0.78rem;
+          color:var(--color-primary);
+        ">✓ Adresses sauvegardées</div>
       </div>
 
       <!-- Errors -->
