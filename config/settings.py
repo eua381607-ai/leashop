@@ -173,7 +173,7 @@ elif _EMAIL_PROVIDER == "smtp":
     EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
     EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
     EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
-    EMAIL_TIMEOUT = 30
+    EMAIL_TIMEOUT = 5
 else:
     # Default to console in development
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

@@ -27,7 +27,7 @@ def _send_order_reminder_email(order, request):
     )
     message = EmailMessage(subject, body, settings.DEFAULT_FROM_EMAIL, [order.email])
     try:
-        message.send(fail_silently=False)
+        message.send(fail_silently=True)
     except Exception as exc:
         logger.warning("Order reminder email could not be sent for order %s: %s", order.pk, exc)
 
