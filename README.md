@@ -93,3 +93,4 @@ static/       # CSS/JS
 - Gestion des retours et remboursements depuis l'admin
 - API REST (Django REST Framework) si un frontend séparé (mobile, SPA) est envisagé plus tard
 # leashop
+# leashop
