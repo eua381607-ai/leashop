@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     "cart",
     "orders",
     "payments",
+    "cloudinary",
+    "cloudinary_storage",
 ]
 
 if DEBUG:
@@ -145,7 +147,7 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage" if env("CLOUDINARY_URL", default="") else "django.core.files.storage.FileSystemStorage",
     },
 }
 
